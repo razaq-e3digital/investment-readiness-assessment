@@ -6,7 +6,6 @@ import {
   getCoreRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { useTranslations } from 'next-intl';
 
 import {
   Table,
@@ -31,7 +30,6 @@ export function DataTable<TData, TValue>({
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
-  const t = useTranslations('DataTable');
 
   return (
     <div className="rounded-md border bg-card">
@@ -39,18 +37,16 @@ export function DataTable<TData, TValue>({
         <TableHeader>
           {table.getHeaderGroups().map(headerGroup => (
             <TableRow key={headerGroup.id}>
-              {headerGroup.headers.map((header) => {
-                return (
-                  <TableHead key={header.id}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext(),
-                      )}
-                  </TableHead>
-                );
-              })}
+              {headerGroup.headers.map(header => (
+                <TableHead key={header.id}>
+                  {header.isPlaceholder
+                    ? null
+                    : flexRender(
+                      header.column.columnDef.header,
+                      header.getContext(),
+                    )}
+                </TableHead>
+              ))}
             </TableRow>
           ))}
         </TableHeader>
@@ -73,7 +69,7 @@ export function DataTable<TData, TValue>({
             : (
                 <TableRow>
                   <TableCell colSpan={columns.length} className="h-24 text-center">
-                    {t('no_results')}
+                    No results.
                   </TableCell>
                 </TableRow>
               )}
