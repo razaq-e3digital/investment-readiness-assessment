@@ -1,20 +1,22 @@
-import { AppConfig } from './AppConfig';
-import { getI18nPath } from './Helpers';
+import { getBaseUrl } from './Helpers';
 
 describe('Helpers', () => {
-  describe('getI18nPath function', () => {
-    it('should not change the path for default language', () => {
-      const url = '/random-url';
-      const locale = AppConfig.defaultLocale;
+  describe('getBaseUrl', () => {
+    it('should return localhost URL in development when no env var set', () => {
+      const originalUrl = process.env.NEXT_PUBLIC_APP_URL;
+      delete process.env.NEXT_PUBLIC_APP_URL;
 
-      expect(getI18nPath(url, locale)).toBe(url);
+      expect(getBaseUrl()).toBe('http://localhost:3000');
+
+      process.env.NEXT_PUBLIC_APP_URL = originalUrl;
     });
 
-    it('should prepend the locale to the path for non-default language', () => {
-      const url = '/random-url';
-      const locale = 'fr';
+    it('should return NEXT_PUBLIC_APP_URL when set', () => {
+      process.env.NEXT_PUBLIC_APP_URL = 'https://assess.e3digital.net';
 
-      expect(getI18nPath(url, locale)).toMatch(/^\/fr/);
+      expect(getBaseUrl()).toBe('https://assess.e3digital.net');
+
+      delete process.env.NEXT_PUBLIC_APP_URL;
     });
   });
 });
