@@ -77,9 +77,17 @@ After completing the assessment and waiting for AI scoring, founders need to see
 - No sensitive data exposed (no email, no raw responses in API response)
 - Rate limit API reads: 30 requests per minute per IP (prevent enumeration)
 
-### 4.2 — Results Page Route
+### 4.2 — Results Page Route & Layout (Stitch Design)
 
 **Route:** `/results/[id]` — Server Component
+
+**Overall page layout (from Stitch mockup):**
+- **Top navbar:**
+  - Left: "E3 Digital" logo (blue square icon + text) — consistent branding
+  - Centre: nav links — "Dashboard", "Assessment", "Resources", "Community" (link to in-scope pages only; non-existent pages can be greyed out or omitted)
+  - Right: "Log Out" text button + user avatar circle
+  - If not logged in: show "Login" and "Start Assessment" instead
+  - Navbar: solid white background, bottom border `#e2e8f0`
 
 **Page structure:**
 - Fetch assessment data server-side (RSC)
@@ -92,63 +100,89 @@ After completing the assessment and waiting for AI scoring, founders need to see
 - Description: "See your personalised investor readiness assessment results"
 - No indexing (robots: noindex, nofollow) — these are private results
 
-### 4.3 — Score Gauge Component
+### 4.3 — Score Gauge Hero Section (Stitch Design)
 
-**Visual:** Semi-circular or circular gauge showing overall score (0-100)
+**Layout: Dark navy hero section** (`#0f172a` background), centred content
 
-**Colour coding by score range:**
-- 70-100: Green (#22c55e) — "Investment Ready"
-- 50-69: Amber/Yellow (#f59e0b) — "Nearly There"
-- 25-49: Orange (#f97316) — "Early Stage"
-- 0-24: Red (#ef4444) — "Too Early"
+**Content (from Stitch mockup):**
+- **Readiness badge** at top: pill badge above the gauge (e.g. "Nearly There" in green pill with icon) — see 4.4 for badge spec
+- **Circular score gauge** centred:
+  - Full circle (not semi-circular) with thick arc stroke
+  - Arc colour: gradient or solid colour based on score range (see colour coding below)
+  - Large score number in the centre: `text-5xl font-bold text-white` — e.g. "72"
+  - "SCORE" label below the number, uppercase, `text-xs tracking-wider text-[#94a3b8]`
+  - Background arc track: `rgba(255,255,255,0.1)` or subtle dark grey
+  - Gauge size: ~200px diameter
+- **Heading below gauge:** "Your Investor Readiness Score" — `text-2xl font-bold text-white`, centred
+- **Summary paragraph:** 1-2 sentence AI-generated summary — `text-base text-[#94a3b8]`, centred, max-width ~600px
+- **"Download Full Report" button:** White outline button with download icon — links to the full results section below (smooth scroll, not PDF)
+
+**Colour coding by score range (for gauge arc):**
+- 75-100: Green (`#22c55e`) — "Investment Ready"
+- 50-74: Yellow/Amber (`#eab308`) — "Nearly There"
+- 25-49: Orange (`#f97316`) — "Early Stage"
+- 0-24: Red (`#ef4444`) — "Too Early"
 
 **Behaviour:**
-- Animated fill on page load (counter animation from 0 to score)
-- Large score number in the centre
-- Score label below (e.g., "out of 100")
+- Animated fill on page load (counter animation from 0 to score, arc fills simultaneously)
 - Smooth easing animation (1.5s duration)
 
-### 4.4 — Readiness Level Badge
+### 4.4 — Readiness Level Badge (Stitch Design)
 
-**Display:** Pill/badge component below the score gauge
+**Display:** Pill/badge positioned above the score gauge in the dark hero section
 
-**Levels:**
-- "Investment Ready" — Green badge, icon: rocket/checkmark
-- "Nearly There" — Amber badge, icon: target/arrow
-- "Early Stage" — Orange badge, icon: seedling/growth
-- "Too Early" — Red badge, icon: compass/map
+**Stitch mockup spec:**
+- Rounded-full pill: coloured background tint + coloured text + small icon
+- Investment Ready: green pill (`bg-[#dcfce7] text-[#22c55e]`), rocket icon
+- Nearly There: green/teal pill, target icon
+- Early Stage: orange pill (`bg-[#ffedd5] text-[#f97316]`), seedling icon
+- Too Early: red pill (`bg-[#fee2e2] text-[#ef4444]`), compass icon
+- Padding: `px-4 py-1.5`, `text-sm font-medium`
 
-**Content below badge:**
+**Content below badge (in hero section):**
 - 1-2 sentence summary based on level:
   - Investment Ready: "Your startup shows strong fundamentals across key investor criteria. You're well-positioned to approach investors."
   - Nearly There: "You're making good progress, but there are a few areas that need attention before you'll be investor-ready."
   - Early Stage: "You've got the foundations, but significant work is needed across several key areas before approaching investors."
   - Too Early: "Focus on building your product and validating your market before seeking investment. Here's where to start."
 
-### 4.5 — Category Breakdown Bars
+### 4.5 — Category Breakdown Section (Stitch Design)
 
-**Display:** 10 horizontal bar charts, one per category
+**Layout (from Stitch mockup):**
+- White card container below the dark hero, `rounded-xl`, border `#e2e8f0`, `p-6`
+- Section heading: "Category Breakdown" — `text-xl font-semibold`
+- Timestamp: "Last updated: X hours ago" — `text-xs text-[#94a3b8]`, right-aligned or below heading
+- **2-column grid layout** (5 rows × 2 columns = 10 categories) on desktop
+- Stacked single column on mobile
 
-**Each bar shows:**
-- Category name (left-aligned)
-- Score number (right-aligned)
-- Horizontal fill bar (colour-coded by score range, same as gauge)
+**Each category bar (Stitch mockup spec):**
+- Category name: `text-sm font-medium text-[#0f172a]`
+- Score percentage: `text-sm font-semibold` right-aligned, same colour as bar
+- Progress bar below: `h-2 rounded-full`, track `#e2e8f0`
+- Bar fill colour-coded by score:
+  - 75-100: Green `#22c55e`
+  - 60-74: Blue `#3b82f6`
+  - 40-59: Orange `#f97316`
+  - 0-39: Red `#ef4444`
+- Each item has vertical spacing (`gap-4` or `space-y-4`)
+
+**Behaviour:**
 - Animated fill on scroll into view (staggered, 100ms delay between bars)
+- Optional: click to expand and see AI justification + recommendation
 
-**Sorting:** Display in descending score order (highest first) to lead with strengths
+### 4.6 — Top 3 Gaps Cards (Stitch Design)
 
-**Optional:** Click/expand on a bar to see the AI's justification and recommendation for that category
+**Layout (from Stitch mockup):**
+- Section heading: "Top 3 Gaps to Address" — `text-xl font-semibold`
+- 3 cards in a row (stacked on mobile), `gap-6`
 
-### 4.6 — Top 3 Gaps Cards
-
-**Display:** 3 cards in a row (stacked on mobile)
-
-**Each card contains:**
-- Gap title (e.g., "Financial Model Needs Work")
-- "Current state" — brief description of where they are now
-- "Recommended actions" — bulleted list of 2-3 specific actions
-- Card has a subtle left border colour (red/orange/amber based on severity)
-- Icon per card (relevant to the gap category)
+**Each card (Stitch mockup spec):**
+- White card: border `#e2e8f0`, `rounded-xl`, `p-6`
+- Top: emoji or icon (e.g. chart emoji, target emoji, document emoji) — large, `text-2xl`
+- Title: `text-lg font-semibold text-[#0f172a]` — e.g. "Financial Model Needs Work"
+- Description: `text-sm text-[#475569]` — brief description of the gap and current state
+- Bottom: "See Resource →" link in accent blue `text-[#2563eb] text-sm font-medium` — links to relevant recommendation or external resource
+- No coloured left border (Stitch mockup uses clean card style with top emoji instead)
 
 ### 4.7 — Next Steps Section
 
@@ -166,17 +200,16 @@ After completing the assessment and waiting for AI scoring, founders need to see
 - Bulleted list of 3-5 medium-term recommendations
 - Each item is a strategic action
 
-### 4.8 — Consultation CTA Section
+### 4.8 — Consultation CTA Section (Stitch Design)
 
-**Design:** Prominent, full-width section with contrasting background
+**Layout (from Stitch mockup):** Dark navy background section (`#0f172a`), full-width, centred content
 
 **Content:**
-- Headline: "Want Expert Help Getting Investor-Ready?"
-- Subheadline: "Book a free 30-minute strategy call with our founder, Razaq Sherif, to discuss your results and create an action plan."
-- Primary CTA button: "Book Your Free Strategy Call →"
+- Heading: "Ready to close those gaps?" — `text-3xl font-bold text-white`, centred
+- Subheadline: "Book a free strategy call to discuss your results and create a personalised action plan." — `text-base text-[#94a3b8]`, centred
+- CTA button: "Book Your Free Strategy Call" — green filled `#10b981`, white text, `rounded-lg px-8 py-3 font-semibold`, centred
 - Button links to Zoho booking URL (opens in new tab)
-- Trust elements: "Free · No obligation · 30 minutes"
-- Razaq's photo/avatar (optional)
+- Optional trust text below: "Free · No obligation · 30 minutes" — `text-xs text-[#94a3b8]`
 
 **Zoho booking URL:** To be provided (environment variable or hardcoded config)
 

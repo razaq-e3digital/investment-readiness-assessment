@@ -34,7 +34,7 @@ The business operator (Razaq / E3 Digital team) needs to view and manage all ass
 
 ## Detailed Requirements
 
-### 7.1 — Admin Route Protection
+### 7.1 — Admin Route Protection & Layout (Stitch Design)
 
 **Implementation:**
 - Clerk role-based access: check for `admin` role on user metadata
@@ -52,63 +52,100 @@ The business operator (Razaq / E3 Digital team) needs to view and manage all ass
 - `/dashboard/admin/analytics` — analytics
 - All `/api/admin/*` endpoints
 
-### 7.2 — Dashboard Overview Page
+**Admin Layout (from Stitch mockup):**
+
+**Dark sidebar (left, fixed):**
+- Background: `#0f172a` (navy), full viewport height
+- Width: ~260px (collapsible on mobile)
+- Top: "E3 Digital" logo (blue square icon + white text) + "ADMIN PANEL" label below in uppercase `text-xs tracking-wider text-[#94a3b8]`
+- **Management section** (label: "MANAGEMENT" in `text-xs uppercase tracking-wider text-[#64748b]`):
+  - Dashboard (icon: grid/layout, active state: white text + subtle `bg-white/10` rounded background)
+  - Assessments (icon: clipboard)
+  - Analytics (icon: bar-chart)
+  - Founders (icon: users) — links to assessments filtered view or future page
+- **System section** (label: "SYSTEM"):
+  - Settings (icon: cog)
+  - Support (icon: help-circle)
+- Nav items: `text-sm text-[#94a3b8]`, hover: `text-white`, active: `text-white bg-white/10 rounded-lg px-3 py-2`
+- **Bottom of sidebar:** User info — avatar circle + "Razaq Sherif" name + "Super Admin" role label — `text-sm text-white` and `text-xs text-[#94a3b8]`
+
+**Top bar (right of sidebar):**
+- Background: white, bottom border `#e2e8f0`
+- Left: search input with icon — `rounded-lg border-[#e2e8f0] bg-[#f8fafc] px-4 py-2`, placeholder "Search..."
+- Right: notification bell icon (with red dot badge if notifications) + "+ Create New" blue filled button (`#2563eb`)
+
+**Content area:**
+- Background: `#f8fafc` (light blue-grey)
+- Padding: `p-6` or `p-8`
+- All content renders to the right of the sidebar and below the top bar
+
+### 7.2 — Dashboard Overview Page (Stitch Design)
 
 **Route:** `/dashboard/admin`
 
-**4 KPI Cards:**
+**Page header:**
+- Heading: "Dashboard Overview" — `text-2xl font-bold text-[#0f172a]`
+- Subheading: "Welcome back, Razaq. Here's what's happening." — `text-sm text-[#475569]`
 
-1. **Total Assessments**
-   - Number: count of all assessments
-   - Subtitle: "+X this week" (count from last 7 days)
-   - Icon: clipboard/form
+**4 KPI Cards (Stitch mockup spec):**
+- Layout: 4 cards in a row (`grid-cols-4`, responsive to `grid-cols-2` on tablet, `grid-cols-1` on mobile)
+- Each card: white background, border `#e2e8f0`, `rounded-xl`, `p-6`
 
-2. **Average Score**
-   - Number: mean of all `overall_score` values (where `ai_scored: true`)
-   - Subtitle: "across X scored assessments"
-   - Icon: gauge/target
+Card layout (from Stitch mockup):
+- **Top row:** Icon in coloured circle (left) + percentage badge (right)
+  - Icon circle: `w-10 h-10 rounded-xl` with pastel coloured background
+  - Percentage badge: small rounded pill showing change — green `bg-[#dcfce7] text-[#22c55e]` with up arrow for positive, red `bg-[#fee2e2] text-[#ef4444]` with down arrow for negative — e.g. "+12.5%" or "-3.2%"
+- **Middle:** Label text — `text-sm text-[#475569]` — e.g. "Total Assessments"
+- **Bottom:** Large value — `text-3xl font-bold text-[#0f172a]` — e.g. "1,248"
 
-3. **Bookings**
-   - Number: count where `booked: true`
-   - Subtitle: "X% conversion rate" (booked / total)
-   - Icon: calendar/check
+Cards:
+1. **Total Assessments** — blue icon circle, clipboard icon, "+X.X% this week"
+2. **Average Score** — purple icon circle, gauge icon, "+/-X.X% vs last month"
+3. **Bookings** — green icon circle, calendar-check icon, "+X.X%"
+4. **Conversion Rate** — orange icon circle, trending-up icon, "+/-X.X%"
 
-4. **Conversion Rate**
-   - Number: percentage of assessments that resulted in a booking
-   - Subtitle: "from X total assessments"
-   - Icon: trending-up
+**Recent Assessments Table (below KPI cards, Stitch mockup spec):**
+- Section heading: "Recent Assessments" — `text-lg font-semibold`
+- White card container, border, `rounded-xl`
+- Table with columns:
+  - **Founder:** avatar circle (initials or image) + name + company — two lines
+  - **Date:** relative time — `text-sm text-[#475569]`
+  - **Score:** numeric score + small coloured progress bar next to it (green/blue/orange/red based on score)
+  - **Status:** coloured pill badge — "Investor Ready" (green), "Nearly There" (blue), "Early Stage" (orange), "Too Early" (red)
+  - **Actions:** three-dot menu icon (kebab menu) → View, Delete
+- Show last 5 assessments
+- Table rows: hover state `bg-[#f8fafc]`, alternating subtle zebra striping optional
+- **Pagination footer:** "Showing 1 to 5 of X results" left, "← Previous" / "Next →" buttons right — buttons: ghost style, `rounded-lg border px-3 py-1.5 text-sm`
 
-**Additional section below cards:**
-- "Recent Assessments" — last 5 assessments (name, score, readiness level, date)
-- "Pending Review" — count of `ai_scored: false` assessments (link to filtered list)
-- "Failed Email" — count of assessments with failed email delivery
-
-### 7.3 — Assessments List Page
+### 7.3 — Assessments List Page (Stitch Design)
 
 **Route:** `/dashboard/admin/assessments`
 
-**Data Table (using @tanstack/react-table, already in dependencies):**
+**Data Table (using @tanstack/react-table):**
+
+Same design pattern as the Recent Assessments table in 7.2 but full-featured:
 
 **Columns:**
-- Name (contact_name)
+- Avatar + Name (contact_name) + Company — same two-line layout as overview table
 - Email (contact_email)
-- Company (contact_company)
-- Score (overall_score) — colour-coded badge
-- Readiness Level — colour-coded badge
+- Score (overall_score) — number + small coloured bar
+- Readiness Level — coloured pill badge
 - Email Status — icon (sent/delivered/opened/failed)
 - CRM Status — icon (synced/not synced)
 - Booked — checkbox or badge
 - Date (created_at) — relative time + full date on hover
-- Actions — view detail, delete
+- Actions — three-dot kebab menu (view detail, delete)
 
 **Search:**
+- Uses the top bar search input
 - Free text search across name, email, company
 
 **Sort:**
-- Click column headers to sort
+- Click column headers to sort (subtle arrow indicators)
 - Default: newest first
 
 **Filters:**
+- Filter bar above table or as a dropdown panel
 - Readiness level: dropdown multi-select (Investment Ready / Nearly There / Early Stage / Too Early)
 - Score range: min-max slider or input
 - Date range: date picker (from/to)
@@ -117,10 +154,10 @@ The business operator (Razaq / E3 Digital team) needs to view and manage all ass
 - AI Scored: Yes / No / All
 - Email Status: All / Sent / Delivered / Opened / Failed
 
-**Pagination:**
-- 25 rows per page (configurable: 10, 25, 50, 100)
-- Page number navigation
-- Total count display
+**Pagination (Stitch mockup spec):**
+- Bottom of table: "Showing 1 to 25 of X results" left
+- Right: "← Previous" / "Next →" ghost buttons, `rounded-lg border px-3 py-1.5`
+- Configurable rows per page: 10, 25, 50, 100
 
 **API:** `GET /api/admin/assessments` with query params for search, sort, filter, pagination
 

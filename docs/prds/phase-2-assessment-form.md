@@ -69,57 +69,78 @@ type AssessmentFormData = {
 - Back navigation preserves all previously entered data
 - No data is sent to the server until final submission
 
-### 2.2 — Reusable Question Components
+### 2.2 — Reusable Question Components (Stitch Design)
 
-Build a library of reusable form question components that accept standardised props:
+Build a library of reusable form question components that accept standardised props and match the Stitch assessment form mockup precisely.
 
 **Component: `TextQuestion`**
 - Props: `name`, `label`, `placeholder`, `helpText?`, `maxLength?`
 - Single-line text input
 - Character count if `maxLength` provided
+- Input styling: white background, border `#e2e8f0`, `rounded-lg`, `p-3`, focus border `#2563eb`
 
 **Component: `TextareaQuestion`**
 - Props: `name`, `label`, `placeholder`, `helpText?`, `maxLength?`, `rows?`
 - Multi-line textarea
 - Character count
 - Shift+Enter for newline (Enter advances form)
+- Same input styling as TextQuestion
 
 **Component: `EmailQuestion`**
 - Props: `name`, `label`, `placeholder`, `helpText?`
 - Email input with format validation
+- Same input styling as TextQuestion
 
 **Component: `NumberQuestion`**
 - Props: `name`, `label`, `placeholder`, `helpText?`, `min?`, `max?`, `prefix?`, `suffix?`
 - Numeric input with optional currency prefix
+- Same input styling as TextQuestion
 
-**Component: `RadioCardQuestion`**
+**Component: `RadioCardQuestion`** (KEY COMPONENT — matches Stitch mockup)
 - Props: `name`, `label`, `options: { value, title, description?, icon? }[]`, `helpText?`
 - Visual radio cards (not plain radio buttons)
-- Each option is a clickable card with title and optional description
-- Selected state with brand accent colour border/background
+- **Stitch design spec:**
+  - Each option is a full-width clickable card
+  - Card layout: icon (in light grey `#f1f5f9` circle, left) + title (bold, `#0f172a`) + description (muted `#475569`, below title)
+  - Card: white background, border `#e2e8f0`, `rounded-xl`, `p-4`, cursor pointer
+  - Unselected state: light grey circle placeholder on right side
+  - **Selected state:** Border changes to `#2563eb` (accent blue), right side shows blue filled checkmark circle (`#2563eb` background, white checkmark icon), subtle blue tint on card background (`#eff6ff` or `bg-blue-50`)
+  - Hover state: slight border colour change or shadow
+  - Icons: each option can have an icon rendered in the left grey circle (e.g. emoji, Lucide icon, or SVG)
+  - Cards stack vertically with `gap-3` spacing
 
 **Component: `MultiSelectQuestion`**
 - Props: `name`, `label`, `options: { value, title, description? }[]`, `helpText?`, `min?`, `max?`
 - Checkbox-style multi-select cards
+- Same card styling as RadioCardQuestion but allows multiple selections
+- Selected state: same blue border + checkmark pattern
 - Optional min/max selection limits
 
 **Component: `DropdownQuestion`**
 - Props: `name`, `label`, `options: { value, label }[]`, `placeholder?`, `helpText?`
 - Select dropdown (use Shadcn Select component)
+- Styled to match design system: white bg, border `#e2e8f0`, `rounded-lg`
 
-**Shared styling:**
-- All components follow the same visual pattern: large label, helper text below, input below that
-- Error messages appear inline below the input in red
+**Shared styling (from Stitch mockup):**
+- Question container: white card background, border `#e2e8f0`, `rounded-xl`, `p-6 md:p-8`, centred on page with max-width ~640px
+- Question label: `text-xl font-semibold text-[#0f172a]`, above options
+- Help text / subtitle: `text-sm text-[#475569]`, below label, above options, with `mb-4`
+- Error messages: `text-sm text-[#ef4444]` inline below the input/options
 - Animated error appearance (slide down + fade in)
-- Focus styles match brand accent colour
+- Focus styles: accent blue `#2563eb` ring/border
 
-### 2.3 — Form Navigation
+### 2.3 — Form Navigation (Stitch Design)
 
-**Progress Bar:**
-- Fixed at top of form page
-- Shows: current section number / total sections (e.g., "3 of 11")
-- Visual progress fill (percentage-based, animated)
-- Section name displayed below progress bar
+**Top Navbar:**
+- Left: "E3 Digital" logo (blue square icon + text) — consistent branding
+- Right: "Save & Exit" ghost button (returns to landing page)
+- Slim, clean navbar matching the design system
+
+**Progress Bar (Stitch mockup spec):**
+- Positioned below the navbar, full-width
+- Left label: "SECTION X OF Y" — uppercase, `text-xs font-medium tracking-wider text-[#475569]`
+- Right label: "XX% Completed" — `text-xs font-medium text-[#475569]`
+- Progress bar below labels: full-width, `h-2 rounded-full`, background track `#e2e8f0`, fill `#2563eb` (accent blue), animated width transition
 
 **Section Indicator:**
 - Small breadcrumb or dot indicator showing all sections
@@ -127,17 +148,27 @@ Build a library of reusable form question components that accept standardised pr
 - Completed sections marked with checkmark
 - Click on previous sections to navigate back (not forward)
 
-**Navigation Buttons:**
-- "Next →" button (primary style, bottom right)
-- "← Back" button (ghost/text style, bottom left)
+**Navigation Buttons (Stitch mockup spec):**
+- Container: below the question card, separated by a subtle divider line (`border-t border-[#e2e8f0]`)
+- Left: "← Back" text link style — `text-sm font-medium text-[#475569]`, with left arrow
+- Right: "Continue →" primary button — blue filled `#2563eb`, white text, `rounded-lg px-6 py-3 font-semibold`, with right arrow
 - On first section: no Back button
-- On last section (contact info): "Submit Assessment" button replaces Next
+- On last section (contact info): "Submit Assessment" button replaces Continue
+
+**Footer:**
+- Simple footer at bottom: "© 2025 E3 Digital. All rights reserved." — `text-xs text-[#94a3b8]`, centred
 
 **Keyboard Support:**
 - `Enter` key advances to next question/section (except in textareas)
 - `Shift+Enter` for newline in textareas
 - Arrow keys navigate radio card options
 - `Tab` follows logical focus order
+
+**Overall Page Layout (Stitch mockup):**
+- Background: `#f8fafc` (light blue-grey)
+- Question card: centred, max-width ~640px, white background, border, `rounded-xl`, `p-6 md:p-8`
+- Clean, minimal feel — one question section visible at a time
+- No sidebar, no distracting elements — focus entirely on the question
 
 ### 2.4–2.5 — Assessment Sections (10 Categories + Contact)
 
