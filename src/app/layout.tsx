@@ -1,6 +1,13 @@
 import '@/styles/global.css';
 
 import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   icons: [
@@ -30,8 +37,8 @@ export const metadata: Metadata = {
 export default function RootLayout(props: { children: React.ReactNode }) {
   // suppressHydrationWarning prevents hydration errors from next-themes and Sentry Overlay
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className="bg-background text-foreground antialiased" suppressHydrationWarning>
+    <html lang="en" className={inter.variable} suppressHydrationWarning>
+      <body className="bg-background font-sans text-foreground antialiased" suppressHydrationWarning>
         {props.children}
       </body>
     </html>

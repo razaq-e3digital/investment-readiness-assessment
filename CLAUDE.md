@@ -51,6 +51,7 @@ This repo enforces **Conventional Commits** via commitlint + Husky.
 
 **Rules**:
 - Subject MUST be lowercase — `feat: add login` not `feat: Add Login`
+- **Body lines must be ≤ 100 characters** — commitlint enforces `body-max-line-length`. Long bullet points in the body will fail. Wrap lines or keep them short.
 - Commit messages WITHOUT a type prefix will fail CI (`subject-empty`, `type-empty` errors)
 - Footer lines (like URLs) must have a leading blank line or commitlint fails with `footer-leading-blank`
 - CI validates ALL commits in a PR, not just the latest — every commit must pass
@@ -102,6 +103,37 @@ git add -A && git reset HEAD .env.local
 - Path aliases: `@/*` → `./src/*`, `@/public/*` → `./public/*`
 - TypeScript strict mode: `noUncheckedIndexedAccess`, `noUnusedLocals`, `noUnusedParameters` all enabled
 
+### ESLint rules that bite in practice (Phase 1 discoveries)
+
+**`style/jsx-one-expression-per-line`** — When mixing inline elements (`<strong>`, `<Link>`, `<a>`) with surrounding text, each element AND each adjacent text node must be on its own line, with `{' '}` spacers. Auto-fixed by `npm run lint:fix` but generates many errors upfront. Example:
+```tsx
+// ❌ fails
+<p>Contact us at <a href="...">email</a>.</p>
+
+// ✅ passes
+<p>
+  Contact us at
+  {' '}
+  <a href="...">email</a>
+  .
+</p>
+```
+
+**`tailwindcss/enforces-shorthand`** — Tailwind shorthand must be used when available. Common traps:
+- `left-0 right-0` → `inset-x-0`
+- `top-0 bottom-0` → `inset-y-0`
+- `h-full w-full` → `size-full`
+- `px-4 py-4` → `p-4` (only when both values are equal)
+- Auto-fixed by `npm run lint:fix`.
+
+**`curly`** — All `if` statements must use braces, even single-line. `if (x) return;` → `if (x) { return; }`. Auto-fixable.
+
+**`react/no-array-index-key`** — Never use array index as React `key`. Use a stable unique property from the data instead.
+
+**`react-refresh/only-export-components`** — A file that exports a React component must ONLY export that component. Exporting a utility function alongside a component causes this warning and breaks Fast Refresh. **Fix:** move utility functions to their own file in `src/utils/`. Example: `trackEvent` lives in `src/utils/analytics.ts`, not in `GoogleAnalytics.tsx`.
+
+**`ts/consistent-type-definitions: type`** — Use `type` not `interface`. Exception: `declare global { interface Window ... }` augmentations cannot use `type` — add `// eslint-disable-next-line ts/consistent-type-definitions` above them (see `src/types/global.d.ts` for examples).
+
 ---
 
 ## Project Structure
@@ -134,7 +166,7 @@ The application is built in 9 incremental phases:
 | Phase | Name | Status |
 |-------|------|--------|
 | 0 | Boilerplate Setup | ✅ Complete (PR #2) |
-| 1 | Landing Page & Design System | Pending |
+| 1 | Landing Page & Design System | ✅ Complete (PR #4) |
 | 2 | Assessment Form | Pending |
 | 3 | Submission & AI Scoring | Pending |
 | 4 | Results Page | Pending |
@@ -156,19 +188,35 @@ Both reference the same PRDs. Always implement phases in order (0 → 1 → 2 �
 
 ---
 
-## Design System (from Stitch Mockups)
+## Design System (implemented in Phase 1)
 
-The design system is fully specified in `docs/prds/phase-1-landing-page.md` Section 1.1. Key tokens:
+Tokens are **live in `tailwind.config.ts`** as of Phase 1. Use these class names directly — do NOT use raw hex values in new code.
 
-- **Primary Navy**: `#0f172a` (dark sections, admin sidebar)
-- **Accent Blue**: `#2563eb` (buttons, links, selected states)
-- **Background**: `#f8fafc` (page bg), `#f1f5f9` (processing screen bg)
-- **CTA Green**: `#10b981` (final CTA buttons on results page)
-- **Score Colors**: Green `#22c55e` (75-100), Blue `#3b82f6` (60-74), Orange `#f97316` (40-59), Red `#ef4444` (0-39)
-- **Font**: Inter (400/500/600/700)
-- **Cards**: White bg, `rounded-xl`, `shadow-sm`, `border border-slate-200`
+| Token class | Hex | Usage |
+|---|---|---|
+| `bg-navy` / `text-navy` | `#0f172a` | Hero, FinalCTA, Footer, admin sidebar |
+| `bg-navy-light` | `#1e293b` | Gradient end on dark sections |
+| `bg-accent-blue` | `#2563eb` | Primary CTA buttons, links |
+| `hover:bg-accent-blue-hover` | `#1d4ed8` | Button hover state |
+| `bg-accent-blue-light` | `#dbeafe` | Badges, info tint backgrounds |
+| `bg-cta-green` | `#10b981` | Secondary CTA (Book Strategy Call) |
+| `bg-page-bg` | `#f8fafc` | Light section backgrounds |
+| `bg-card-border` | `#e2e8f0` | Card borders, dividers |
+| `text-text-primary` | `#0f172a` | Headings |
+| `text-text-secondary` | `#475569` | Body text |
+| `text-text-muted` | `#94a3b8` | Helper text, timestamps |
+| `text-score-green` + `bg-score-green-bg` | `#22c55e` / `#dcfce7` | Score 75–100 |
+| `text-score-blue` + `bg-score-blue-bg` | `#3b82f6` / `#dbeafe` | Score 60–74 |
+| `text-score-orange` + `bg-score-orange-bg` | `#f97316` / `#ffedd5` | Score 40–59 |
+| `text-score-red` + `bg-score-red-bg` | `#ef4444` / `#fee2e2` | Score 0–39 |
 
-Design specs live in PRDs — always reference the PRD for exact colours, spacing, and component structures rather than improvising.
+**Font:** Inter via `next/font/google` with CSS variable `--font-inter`. Applied via `font-sans` class (configured in tailwind). Do not add a separate `<link>` for Inter.
+
+**Cards:** `rounded-xl border border-card-border bg-white shadow-card` — use `shadow-card` not `shadow-sm`.
+
+**Buttons — primary:** `bg-accent-blue hover:bg-accent-blue-hover rounded-lg px-6 py-3 text-base font-semibold text-white`
+
+Full spec in `docs/prds/phase-1-landing-page.md` Section 1.1.
 
 ---
 
@@ -200,10 +248,25 @@ GitHub Actions (`.github/workflows/CI.yml`) runs on PRs to main:
 
 1. **Drizzle not Prisma** — This project uses Drizzle ORM, not Prisma. Schema in `src/models/Schema.ts`.
 
-2. **i18n is required** — All user-facing strings should go through next-intl. Translation files are in `src/locales/`.
+2. **i18n was removed in Phase 0** — `next-intl` was stripped out. Do NOT route strings through next-intl. Write user-facing strings directly in components. The old boilerplate `src/locales/` directory no longer exists.
 
-3. **Semgrep on Windows** — Use `python -m semgrep --config=auto src/ --error` (not available via npx).
+3. **Semgrep on Windows — broken as of v1.151.0** — Multiple approaches fail:
+   - `python -m semgrep` — deprecated as of v1.38.0, exits with deprecation error
+   - `semgrep` / `npx semgrep` — not on PATH
+   - `pysemgrep.exe --config=auto` — fails with `UnicodeEncodeError: 'charmap' codec can't encode character '\u202a'` (Windows cp1252 encoding bug when writing downloaded rules to a temp file)
 
-4. **`npm install` may not be run in CI environments** — Node modules might not be installed. Commitlint/ESLint won't run locally without them. CI is the final gatekeeper.
+   **Workaround:** Set `PYTHONUTF8=1` before running:
+   ```bash
+   PYTHONUTF8=1 "C:/Users/Razaq/AppData/Roaming/Python/Python313/Scripts/pysemgrep.exe" --config=auto src/ --error
+   ```
+   If that still fails, semgrep CI will catch issues. Note this in the PR rather than skipping silently.
 
-5. **Pre-commit hooks run sequentially** — lint-staged is configured with `--concurrent false` so type-checking runs after ESLint fixes are applied.
+4. **`npm run build` takes 60–90 seconds** — When running build in a Claude Code session, use `run_in_background: true` or add a long timeout (120s+). A 30s timeout will falsely appear to hang. The build output shows `✓ Compiled successfully` before lint/type phases, so partial output does not mean success.
+
+5. **`npm install` may not be run in CI environments** — Node modules might not be installed. Commitlint/ESLint won't run locally without them. CI is the final gatekeeper.
+
+6. **Pre-commit hooks run sequentially** — lint-staged is configured with `--concurrent false` so type-checking runs after ESLint fixes are applied.
+
+7. **Analytics** — GA4 Measurement ID is `G-P59WC8HKVK`, set in `.env` (committed — it's a public value). Use `trackEvent()` from `src/utils/analytics.ts` for custom events. Cookie consent key in localStorage is `'cookie-consent'` (values: `'accepted'` | `'declined'`). Consent change triggers `window.dispatchEvent(new Event('cookie-consent-change'))`.
+
+8. **Public env file is `.env`, secrets in `.env.local`** — `.env` is committed to git (contains `NEXT_PUBLIC_*` and non-secret config). `.env.local` is gitignored (contains `CLERK_SECRET_KEY`, `DATABASE_URL`, etc.). The staging pattern `git add -A && git reset HEAD .env.local` only protects `.env.local` — never put secrets in `.env`.
