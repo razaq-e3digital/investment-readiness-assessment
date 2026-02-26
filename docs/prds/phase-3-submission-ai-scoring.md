@@ -227,25 +227,50 @@ const AIScoringResponseSchema = z.object({
 - Log the failure in Sentry with full context
 - Admin dashboard (Phase 7) will show unscored assessments
 
-### 3.7 — Processing/Loading Animation Page
+### 3.7 — Processing/Loading Animation Page (Stitch Design)
 
-**Design:**
-- Full-screen loading state after form submission
-- Animated step-by-step progress:
-  1. "Saving your responses..." (1-2s, instant)
-  2. "Verifying submission..." (reCAPTCHA, 1-2s)
-  3. "Analysing your responses..." (AI scoring, 10-25s)
-  4. "Generating your personalised scorecard..." (final processing, 1-2s)
-  5. "Ready! Redirecting to your results..." (redirect)
-- Each step shows a checkmark when complete
-- Animated spinner/pulse on current step
-- Subtle background animation (e.g., floating dots, gradient shift)
-- Estimated time remaining: "Usually takes 15-30 seconds"
+**Overall layout (from Stitch mockup):**
+- Background: `#f1f5f9` (light blue-grey)
+- Top navbar:
+  - Left: "E3 Digital" logo (blue square icon + text)
+  - Right: Status pill badge — "STATUS • Processing" with pulsing dot indicator, in subtle muted style
+  - Optional: user avatar circle (far right)
+- Content: centred white card, max-width ~480px, `rounded-xl`, `p-8`, `shadow-sm`, border `#e2e8f0`
+
+**Card content (Stitch mockup spec):**
+- Top: circular spinner animation — blue accent `#2563eb` spinning ring/arc on light background
+- Heading: "Preparing your personalised report..." — `text-xl font-semibold text-[#0f172a]`, centred
+- Subtext: "Our AI is analysing your responses against investor readiness criteria. This usually takes 15-30 seconds." — `text-sm text-[#475569]`, centred
+
+**Vertical timeline / step list (Stitch mockup spec):**
+- Steps displayed as a vertical list with connecting line on the left
+- Each step has:
+  - **Completed step:** Green circle with white checkmark icon (`#22c55e` background) + step label in `text-[#0f172a]` + "Complete" badge in green (`text-xs text-[#22c55e]`)
+  - **Active step:** Blue spinning circle (`#2563eb`) + step label in `text-[#2563eb]` (blue) + "Processing..." text in blue (`text-xs text-[#2563eb]`)
+  - **Pending step:** Grey circle outline (`#e2e8f0`) + step label in muted `text-[#94a3b8]` + "Waiting" text
+- Vertical connecting line: thin line (`border-l-2`) between step circles, green for completed segments, grey for pending
+- Steps:
+  1. "Analyzing responses" → completes quickly (1-2s)
+  2. "Scoring 10 criteria" → completes during AI processing
+  3. "Generating recommendations" → active during final processing
+- Each step transitions from pending → active (blue spinner) → completed (green checkmark) sequentially
+
+**Bottom progress bar:**
+- Below the steps, full-width within the card
+- `h-2 rounded-full`, track `#e2e8f0`, fill `#2563eb`
+- Animated fill progressing as steps complete (e.g. 33% per step)
+
+**Footer:**
+- Below the card: "POWERED BY E3 Digital" — `text-xs text-[#94a3b8] uppercase tracking-wider`, centred
+
+**Behaviour:**
 - No back button (prevent double submission)
+- Steps animate in sequence as real processing happens
+- On completion: brief "Complete!" state, then auto-redirect to `/results/[assessmentId]`
 
 **Implementation:**
 - Client-side state machine driven by API response or polling
-- Submit form → show loading page → poll for completion OR use streaming response
+- Submit form → show processing page → poll for completion OR use streaming response
 - On completion: auto-redirect to `/results/[assessmentId]`
 
 ### 3.8 — End-to-End Submission Pipeline
