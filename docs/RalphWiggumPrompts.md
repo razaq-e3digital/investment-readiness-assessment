@@ -13,7 +13,7 @@ For phases with **manual steps** (external service setup, API key configuration,
 ## Table of Contents
 
 1. [Phase 0: Boilerplate Setup & Configuration](#phase-0-boilerplate-setup--configuration)
-2. [Phase 1: Landing Page](#phase-1-landing-page)
+2. [Phase 1: Landing Page & Design System](#phase-1-landing-page--design-system)
 3. [Phase 2: Assessment Form (Core)](#phase-2-assessment-form-core)
 4. [Phase 3: Assessment Submission & AI Scoring](#phase-3-assessment-submission--ai-scoring)
 5. [Phase 4: Results Page](#phase-4-results-page)
@@ -139,95 +139,202 @@ sequentially, stopping at each manual step to ask me for the required values.
 
 ---
 
-## Phase 1: Landing Page
+## Phase 1: Landing Page & Design System
 
 ### RalphWiggum Prompt — Phase 1
 
 ```
 @ralphwiggum implement docs/prds/phase-1-landing-page.md
 
-Context: Boilerplate has been stripped (Phase 0 complete). App has Clerk auth, PostgreSQL database, and deploys to Railway. We need to build the landing page.
+Context: Boilerplate has been stripped (Phase 0 complete). App has Clerk auth, PostgreSQL database, and deploys to Railway. We need to establish the application-wide design system from Stitch mockups and build the landing page to match the designs precisely.
+
+IMPORTANT: The PRD contains a full design system specification (Section 1.1) extracted from Stitch mockups. All colours, typography, spacing, and component primitives MUST match those specifications exactly. The design system will be used by all subsequent phases.
 
 Execute the following tasks:
 
-TASK 1.1 — Landing Page Layout:
+TASK 1.1 — Design System Setup:
+- Update tailwind.config.ts with the EXACT colour palette from the PRD:
+  - Primary navy: #0f172a (dark backgrounds, hero, sidebar, dark sections)
+  - Accent blue: #2563eb (CTAs, active states, progress bars)
+  - Background: #f8fafc (page background, light blue-grey)
+  - Surface: #ffffff (cards)
+  - Border: #e2e8f0 (card borders, dividers)
+  - Text primary: #0f172a, secondary: #475569, muted: #94a3b8
+  - Score colours: green #22c55e, blue #3b82f6, orange #f97316, red #ef4444
+  - Score background tints: green #dcfce7, blue #dbeafe, orange #ffedd5, red #fee2e2
+  - CTA green: #10b981 (secondary CTA buttons like "Book Strategy Call")
+- Configure Inter font (Google Fonts) as the sole font family
+- Set up typography scale: 48px hero, 30px section, 20px card, 16px body, 14px small, 12px caption
+- Configure spacing: 8px grid, consistent section padding (py-16 md:py-24)
+- Configure border radius: rounded-xl (12px) for cards, rounded-lg (8px) for buttons
+- Set up shadow scale: shadow-sm for cards
+
+TASK 1.2 — Landing Page Components:
 - Create src/app/page.tsx as the landing page
 - Build components in src/components/landing/:
-  - Navbar.tsx — sticky nav, E3 Digital logo, Sign In link, transparent → solid on scroll
-  - Hero.tsx — headline "How Ready Is Your Startup for Investment?", subheadline, CTA button → /assessment, trust badges
-  - HowItWorks.tsx — 3-step visual flow with icons
-  - WhatYouGet.tsx — card grid of what the assessment delivers
-  - WhoItsFor.tsx — target audience section
-  - SocialProof.tsx — Razaq's credibility strip with LinkedIn link
-  - FAQ.tsx — collapsible accordion using Shadcn Accordion
-  - FinalCTA.tsx — full-width CTA section
-  - Footer.tsx — copyright, legal links, social links
 
-TASK 1.2 — Brand Design System:
-- Update tailwind.config.ts with E3 Digital colours, typography, spacing
-- PAUSE: Ask user for exact brand colours and fonts from Stitch designs
-- If no brand assets provided, use a professional default: navy primary (#1a1a2e), electric blue accent (#4361ee), Inter font
+  Navbar.tsx:
+  - Left: E3 Digital blue square icon + "E3 Digital" text
+  - Centre: "How it works", "Benefits", "FAQ" (smooth-scroll anchor links)
+  - Right: "Login" text link + "Start Assessment" blue filled button (#2563eb)
+  - Sticky on scroll, transparent over dark hero → solid white background on scroll
+  - Mobile: hamburger menu
 
-TASK 1.3 — Social Proof:
-- Add Razaq Sherif section with LinkedIn link (https://www.linkedin.com/in/razaqsherif/)
-- Styled as a trust-building credibility strip
+  Hero.tsx (DARK navy background #0f172a):
+  - Two-column layout: text left, score preview right
+  - Light blue pill badge: "For Non-Technical Founders"
+  - Headline: "How Investor-Ready Is Your Startup?" — "Startup?" highlighted in accent colour
+  - Subheadline: "Get a free, AI-powered evaluation of your B2B SaaS venture's readiness for investment in under 10 minutes." in muted text (#94a3b8)
+  - Two CTA buttons side by side:
+    - "Start Free Assessment →" (blue filled #2563eb) → /assessment
+    - "View Sample Report" (white outline) → /results/sample
+  - Social proof: avatar stack (3-4 overlapping circles) + "Used by 1,000+ founders"
+  - Right column: static decorative score gauge showing "82" with coloured semi-circular arc + green "Investor Ready" badge — this is illustration only, not functional
+  - NO accelerator trust badges (removed from design)
 
-TASK 1.4 — Google Analytics 4:
+  HowItWorks.tsx (light background #f8fafc):
+  - Section heading: "How It Works" centred
+  - 3 white cards in a row (stacked mobile), each with:
+    - Numbered step in coloured circle
+    - Icon in pastel-coloured circle (blue, green, purple backgrounds)
+    - Title: "Answer Questions" / "Get Analyzed" / "Receive Report"
+    - 1-2 line description
+  - Cards: white, border #e2e8f0, rounded-xl, p-6, centred content
+
+  WhatYouGet.tsx (light background):
+  - Two-column: text left, 2×2 card grid right
+  - Left: heading "What You'll Get", subheading, green-checkmark bullet list:
+    - Personalised readiness score out of 100
+    - 10-category breakdown of investor criteria
+    - Top 3 gaps with specific recommendations
+    - Quick wins you can implement this week
+  - Left: "See Example Report →" link → /results/sample
+  - Right: 2×2 grid of white cards:
+    - "Readiness Score" (blue/purple icon circle)
+    - "Gap Analysis" (orange/amber icon circle)
+    - "Financial Health Check" (green icon circle)
+    - "Pitch Deck Audit" (pink/red icon circle)
+  - Each card: icon in coloured pastel circle, title, 1-line description
+
+  FAQ.tsx (light background):
+  - Heading: "Frequently Asked Questions" centred
+  - Subheading: "Everything you need to know about the assessment" muted, centred
+  - Max-width ~768px centred
+  - Shadcn Accordion, collapsible, single-open:
+    - "How long does the assessment take?" → ~8-10 minutes
+    - "Is it really free?" → Yes, completely free
+    - "What happens with my data?" → Link to /privacy
+    - "How accurate is the AI scoring?" → Based on real investor criteria
+  - Chevron icon that rotates on expand
+
+  FinalCTA.tsx (DARK navy background #0f172a):
+  - Full-width dark banner
+  - Heading: "Ready to see where you stand?" white, centred
+  - Subheading: brief encouragement in muted text
+  - "Start Assessment" blue filled button, centred
+
+  Footer.tsx (dark navy background):
+  - 4-column grid (stacked mobile):
+    - Col 1: E3 Digital logo + tagline + social icons (LinkedIn, X/Twitter)
+    - Col 2 "Product": Assessment, How it works, FAQ
+    - Col 3 "Resources": Privacy Policy, Terms of Service
+    - Col 4 "Company": About (→ e3.digital), Contact (→ mailto:razaq@e3.digital)
+  - Bottom bar: "© 2025 E3 Digital. All rights reserved." left, "Privacy Policy · Terms of Service" right
+  - White/muted text on dark background
+
+TASK 1.3 — Sample Results Page:
+- Create src/app/results/sample/page.tsx with hardcoded sample data
+- Score ~82, "Investor Ready" status, realistic category scores
+- Simplified static versions of score gauge + category bars + gap cards
+- Banner at top: "This is a sample report. Start your own assessment to get personalised results." with CTA
+- Will be refined in Phase 4 when full results components are built
+
+TASK 1.4 — Social Proof:
+- Integrate "Razaq Sherif, Founder at E3 Digital" subtly into the hero section or as a trust strip
+- LinkedIn link: https://www.linkedin.com/in/razaqsherif/
+- Keep subtle, not a full-width section
+
+TASK 1.5 — Google Analytics 4:
 - Create src/components/GoogleAnalytics.tsx using next/script
 - Track page_view (automatic), cta_click, faq_expand custom events
 - Only load after cookie consent
 - PAUSE: Ask user for GA4 Measurement ID (NEXT_PUBLIC_GA4_MEASUREMENT_ID)
 
-TASK 1.5 — Cookie Consent:
+TASK 1.6 — Cookie Consent:
 - Create src/components/CookieConsent.tsx
-- Fixed bottom banner with Accept/Decline/Learn More
+- Fixed bottom banner: white card, rounded, shadow
+- Text + Accept/Decline/Learn More buttons
 - Store consent in localStorage (key: cookie-consent)
 - GA4 only loads when consent granted
 - Keyboard accessible
 
-TASK 1.6 — Legal Pages:
-- Create src/app/privacy/page.tsx — Privacy Policy (data controller: E3 Digital, list all third-party services, GDPR rights, contact: razaq@e3.digital)
+TASK 1.7 — Legal Pages:
+- Create src/app/privacy/page.tsx — Privacy Policy (data controller: E3 Digital, all third-party services, GDPR rights, contact: razaq@e3.digital)
 - Create src/app/terms/page.tsx — Terms of Service (no investment guarantees, AI is guidance not financial advice, England and Wales law)
-- Clean typography, consistent layout, back links
+- Use Navbar + Footer for consistent layout
+- Clean typography, last updated date, back links
 
-Verify: Landing page renders correctly, GA4 fires after consent, cookie banner works, legal pages accessible, mobile responsive at 375px/768px/1440px.
+Verify: Design system tokens configured, landing page matches Stitch mockup precisely, hero two-column layout renders, score gauge preview displays, all sections render, GA4 fires after consent, cookie banner works, legal pages accessible, sample results page loads, mobile responsive at 375px/768px/1440px.
 ```
 
 ### Claude Code Interactive Prompt — Phase 1 Manual Steps
 
 ```
-I need help implementing Phase 1 (Landing Page) of the Investor Readiness
-Assessment Tool. Read the PRD at docs/prds/phase-1-landing-page.md.
+I need help implementing Phase 1 (Landing Page & Design System) of the
+Investor Readiness Assessment Tool.
 
-This phase requires some manual inputs:
+Read the PRD at docs/prds/phase-1-landing-page.md — it contains a FULL
+design system specification (Section 1.1) extracted from Stitch mockups
+and a detailed landing page layout (Section 1.2) that must be matched
+precisely.
 
-1. START by building the landing page layout (Task 1.1) — all sections
-   from Navbar through Footer. Use Shadcn UI components where possible.
+CRITICAL: The design system established here is used by ALL subsequent
+phases. Get the Tailwind tokens right.
 
-2. For the brand design system (Task 1.2) — STOP and ask me if I have
-   specific brand colours and fonts from Stitch designs. If I don't have
-   them yet, use these professional defaults:
-   - Primary: #1a1a2e (navy)
-   - Accent: #4361ee (electric blue)
-   - Font: Inter
+Here's the plan:
 
-   MANUAL ACTION NEEDED: I may need to:
-   - Export colour values from Stitch design files
-   - Provide exact brand font files or names
+1. START with the design system (Task 1.1) — configure tailwind.config.ts
+   with the EXACT colour palette, typography, spacing, and component
+   primitives from the PRD. Key colours:
+   - Primary navy: #0f172a
+   - Accent blue: #2563eb
+   - Background: #f8fafc
+   - Score colours: green #22c55e, blue #3b82f6, orange #f97316, red #ef4444
+   - CTA green: #10b981
+   - Font: Inter (Google Fonts)
+   The full palette is in the PRD Section 1.1.
 
-3. For GA4 tracking (Task 1.4) — STOP and ask me for the GA4 Measurement ID.
+2. Build the landing page components (Task 1.2) matching the Stitch
+   mockup EXACTLY. Key design points:
+   - Hero is TWO-COLUMN: text left, decorative score gauge (showing "82") right
+   - Hero has DARK navy background (#0f172a)
+   - "For Non-Technical Founders" pill badge above headline
+   - Two CTA buttons: "Start Free Assessment →" (blue) + "View Sample Report" (white outline)
+   - Avatar stack + "Used by 1,000+ founders" social proof line
+   - NO accelerator trust badges (YC, Techstars etc. removed)
+   - How It Works: 3 white cards with numbered steps + pastel icon circles
+   - What You'll Get: text with checkmarks LEFT, 2×2 card grid RIGHT
+   - FAQ: centred accordion, max-width ~768px
+   - Final CTA: dark navy full-width banner
+   - Footer: 4-column dark navy, in-scope links only (no Pricing/Blog/Careers)
+   - Nav links: "How it works", "Benefits", "FAQ" + "Login" + "Start Assessment" button
+
+3. Build a static sample results page (Task 1.3) at /results/sample
+   with hardcoded data — this is the "View Sample Report" destination.
+
+4. For GA4 tracking (Task 1.5) — STOP and ask me for the GA4 Measurement ID.
 
    MANUAL ACTION NEEDED: I need to:
    - Go to analytics.google.com
    - Create a new GA4 property for assess.e3digital.net
    - Copy the Measurement ID (G-XXXXXXXXXX)
 
-4. Build cookie consent, legal pages, and social proof sections
-   without any manual dependencies.
+5. Build cookie consent (Task 1.6), legal pages (Task 1.7), and social
+   proof integration (Task 1.4) without any manual dependencies.
 
-Please start building the layout and components, and stop when you hit
-a manual step. You can continue with non-blocked tasks while I handle
-the manual actions.
+Please start with the design system setup, then build the landing page
+components. The only manual pause is for the GA4 Measurement ID.
+You can build everything else without waiting.
 ```
 
 ---
@@ -910,7 +1017,7 @@ accessibility) and flag each manual step as we reach it.
 
 ```
 Phase 0 (Setup)          → Sequential, multiple manual pauses for credentials
-Phase 1 (Landing Page)   → Mostly automated, pause for brand assets + GA4 ID
+Phase 1 (Landing + Design) → Design system from Stitch mockups + landing page, pause for GA4 ID
 Phase 2 (Assessment Form) → Fully automated (no external dependencies)
 Phase 3 (Submission + AI) → Pause for reCAPTCHA keys + OpenRouter API key
 Phase 4 (Results Page)    → Pause for Zoho booking URL
