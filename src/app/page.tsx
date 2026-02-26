@@ -1,19 +1,40 @@
-// Phase 1 will replace this with the full E3 Digital landing page.
-// See docs/prds/phase-1-landing-page.md
+import type { Metadata } from 'next';
 
-export const metadata = {
+import CookieConsent from '@/components/CookieConsent';
+import GoogleAnalytics from '@/components/GoogleAnalytics';
+import FAQ from '@/components/landing/FAQ';
+import FinalCTA from '@/components/landing/FinalCTA';
+import Footer from '@/components/landing/Footer';
+import Hero from '@/components/landing/Hero';
+import HowItWorks from '@/components/landing/HowItWorks';
+import Navbar from '@/components/landing/Navbar';
+import WhatYouGet from '@/components/landing/WhatYouGet';
+
+export const metadata: Metadata = {
   title: 'E3 Digital — Investor Readiness Assessment',
   description:
-    'Find out how investor-ready your B2B SaaS is. Get an AI-powered score, gap analysis, and actionable recommendations in minutes.',
+    'Find out how investor-ready your B2B SaaS is. Get a free AI-powered score, gap analysis, and actionable recommendations in under 10 minutes.',
+  openGraph: {
+    title: 'E3 Digital — Investor Readiness Assessment',
+    description: 'Free AI-powered investor readiness score for B2B SaaS founders.',
+    type: 'website',
+  },
 };
 
-export default function IndexPage() {
+export default function LandingPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-3xl font-bold">E3 Digital</h1>
-        <p className="mt-2 text-muted-foreground">Investor Readiness Assessment — Coming Soon</p>
-      </div>
-    </div>
+    <>
+      <Navbar />
+      <main>
+        <Hero />
+        <HowItWorks />
+        <WhatYouGet />
+        <FAQ />
+        <FinalCTA />
+      </main>
+      <Footer />
+      <CookieConsent />
+      <GoogleAnalytics />
+    </>
   );
 }
