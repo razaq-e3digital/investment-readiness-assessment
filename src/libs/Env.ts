@@ -14,6 +14,7 @@ export const Env = createEnv({
     // Email
     MAILGUN_API_KEY: z.string().optional(),
     MAILGUN_DOMAIN: z.string().optional(),
+    MAILGUN_WEBHOOK_SIGNING_KEY: z.string().optional(),
     // CRM
     BREVO_API_KEY: z.string().optional(),
     // AI Scoring
@@ -50,6 +51,7 @@ export const Env = createEnv({
     SENTRY_PROJECT: process.env.SENTRY_PROJECT,
     MAILGUN_API_KEY: process.env.MAILGUN_API_KEY,
     MAILGUN_DOMAIN: process.env.MAILGUN_DOMAIN,
+    MAILGUN_WEBHOOK_SIGNING_KEY: process.env.MAILGUN_WEBHOOK_SIGNING_KEY,
     BREVO_API_KEY: process.env.BREVO_API_KEY,
     OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
     AI_MODEL: process.env.AI_MODEL,
