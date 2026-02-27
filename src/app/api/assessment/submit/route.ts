@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 import { scoreAssessment } from '@/lib/ai/scoring';
+import { sendAssessmentEmailWithRetry } from '@/lib/email/retry';
 import { hashIp } from '@/lib/hash';
 import { checkRateLimit } from '@/lib/middleware/rate-limit';
 import { verifyRecaptchaToken } from '@/lib/recaptcha';
@@ -136,7 +137,49 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       console.error('[assessment/submit] AI scoring failed:', scoringError);
     }
 
-    // ── 8. Return success ───────────────────────────────────────────────────
+    // ── 8. Send results email (fire-and-forget) ──────────────────────────────
+    const appUrl = Env.NEXT_PUBLIC_APP_URL ?? 'https://assess.e3digital.net';
+    const bookingUrl = Env.NEXT_PUBLIC_ZOHO_BOOKING_URL ?? '#';
+
+    // Only send if AI scoring succeeded
+    if (!aiPending) {
+      const savedAssessmentRows = await db
+        .select()
+        .from(assessments)
+        .where(eq(assessments.id, savedId))
+        .limit(1);
+
+      const savedAssessment = savedAssessmentRows[0];
+
+      if (savedAssessment) {
+        const rawCatScores = savedAssessment.categoryScores as Record<string, number> | null;
+        const catScoresForEmail = rawCatScores
+          ? Object.entries(rawCatScores).map(([name, score]) => ({ name, score }))
+          : [];
+
+        // Fire-and-forget — never await this
+        void sendAssessmentEmailWithRetry({
+          assessmentId: savedId,
+          recipientEmail: responses.contactEmail,
+          contactName: responses.contactName,
+          contactCompany: responses.contactCompany ?? undefined,
+          overallScore: savedAssessment.overallScore ?? 0,
+          readinessLevel: (savedAssessment.readinessLevel ?? 'early_stage') as
+            'investment_ready' | 'nearly_there' | 'early_stage' | 'too_early',
+          categoryScores: catScoresForEmail,
+          topGaps: (savedAssessment.topGaps ?? []) as Array<{
+            title: string;
+            currentState: string;
+            recommendedActions: string[];
+          }>,
+          quickWins: (savedAssessment.quickWins ?? []) as string[],
+          resultsUrl: `${appUrl}/results/${savedId}`,
+          bookingUrl,
+        });
+      }
+    }
+
+    // ── 9. Return success ───────────────────────────────────────────────────
     return NextResponse.json({
       success: true,
       assessmentId: savedId,
