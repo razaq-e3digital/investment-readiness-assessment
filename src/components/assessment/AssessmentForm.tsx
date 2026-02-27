@@ -1,15 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FormProvider, useForm, useFormContext } from 'react-hook-form';
 
 import type { QuestionDef } from '@/data/assessment-questions';
 import { assessmentSections } from '@/data/assessment-questions';
+import { getRecaptchaToken, loadRecaptchaScript } from '@/lib/recaptcha';
 import { sectionValidators } from '@/lib/validation/assessment-schema';
 import type { AssessmentFormData } from '@/types/assessment';
 
 import AssessmentNavbar from './AssessmentNavbar';
 import FormNavigation from './FormNavigation';
+import ProcessingScreen from './ProcessingScreen';
 import ProgressBar from './ProgressBar';
 import ConsentCheckbox from './questions/ConsentCheckbox';
 import DropdownQuestion from './questions/DropdownQuestion';
@@ -20,6 +22,11 @@ import RadioCardQuestion from './questions/RadioCardQuestion';
 import TextareaQuestion from './questions/TextareaQuestion';
 import TextQuestion from './questions/TextQuestion';
 import SectionIndicator from './SectionIndicator';
+
+type ProcessingData = {
+  formData: AssessmentFormData;
+  recaptchaToken: string;
+};
 
 function QuestionDispatcher({ question }: { question: QuestionDef }) {
   switch (question.type) {
@@ -150,7 +157,7 @@ export default function AssessmentForm() {
   const [currentSection, setCurrentSection] = useState(0);
   const [direction, setDirection] = useState<'forward' | 'backward'>('forward');
   const [completedSections, setCompletedSections] = useState<Set<number>>(new Set());
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [processingData, setProcessingData] = useState<ProcessingData | null>(null);
 
   const methods = useForm<AssessmentFormData>({
     defaultValues: {
@@ -203,6 +210,14 @@ export default function AssessmentForm() {
     mode: 'onSubmit',
   });
 
+  // Load reCAPTCHA script early so the token is ready when the user submits
+  useEffect(() => {
+    const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+    if (siteKey) {
+      loadRecaptchaScript(siteKey);
+    }
+  }, []);
+
   const totalSections = assessmentSections.length;
 
   const handleNext = async () => {
@@ -250,9 +265,25 @@ export default function AssessmentForm() {
       });
       return;
     }
-    setIsSubmitting(true);
-    // Phase 3 will handle the actual API submission
-    window.location.href = '/results/sample';
+
+    // Generate reCAPTCHA token (returns '' if key is not configured)
+    let recaptchaToken = '';
+    const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+    if (siteKey) {
+      recaptchaToken = await getRecaptchaToken(siteKey, 'assessment_submit');
+    }
+
+    // Show the processing screen — it handles the API call from here
+    setProcessingData({ formData: methods.getValues(), recaptchaToken });
+  };
+
+  const handleReturnToForm = (errors?: Record<string, string>) => {
+    setProcessingData(null);
+    if (errors) {
+      Object.entries(errors).forEach(([field, message]) => {
+        methods.setError(field as keyof AssessmentFormData, { message });
+      });
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -261,6 +292,17 @@ export default function AssessmentForm() {
       void handleNext();
     }
   };
+
+  // Show processing screen (takes over entire viewport)
+  if (processingData) {
+    return (
+      <ProcessingScreen
+        formData={processingData.formData}
+        recaptchaToken={processingData.recaptchaToken}
+        onReturnToForm={handleReturnToForm}
+      />
+    );
+  }
 
   const isLastSection = currentSection === totalSections - 1;
   const animClass = direction === 'forward' ? 'animate-slide-in-right' : 'animate-slide-in-left';
@@ -303,7 +345,7 @@ export default function AssessmentForm() {
             totalSections={totalSections}
             onBack={handleBack}
             onNext={isLastSection ? handleSubmit : handleNext}
-            isSubmitting={isSubmitting}
+            isSubmitting={false}
           />
         </main>
 

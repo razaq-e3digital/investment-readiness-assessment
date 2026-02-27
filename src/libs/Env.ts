@@ -18,6 +18,7 @@ export const Env = createEnv({
     BREVO_API_KEY: z.string().optional(),
     // AI Scoring
     OPENROUTER_API_KEY: z.string().optional(),
+    AI_MODEL: z.string().optional(),
     // Bot prevention
     RECAPTCHA_SECRET_KEY: z.string().optional(),
   },
@@ -51,6 +52,7 @@ export const Env = createEnv({
     MAILGUN_DOMAIN: process.env.MAILGUN_DOMAIN,
     BREVO_API_KEY: process.env.BREVO_API_KEY,
     OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
+    AI_MODEL: process.env.AI_MODEL,
     RECAPTCHA_SECRET_KEY: process.env.RECAPTCHA_SECRET_KEY,
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
     NEXT_PUBLIC_CLERK_SIGN_IN_URL: process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL,
