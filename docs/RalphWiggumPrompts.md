@@ -18,9 +18,10 @@ For phases with **manual steps** (external service setup, API key configuration,
 4. [Phase 3: Assessment Submission & AI Scoring](#phase-3-assessment-submission--ai-scoring)
 5. [Phase 4: Results Page](#phase-4-results-page)
 6. [Phase 5: Email Delivery (Mailgun)](#phase-5-email-delivery-mailgun)
-7. [Phase 6: Brevo CRM Sync](#phase-6-brevo-crm-sync)
-8. [Phase 7: Admin Dashboard](#phase-7-admin-dashboard)
-9. [Phase 8: Polish, Testing & Pre-Launch](#phase-8-polish-testing--pre-launch)
+7. [Phase 5A: Switch to SMTP2Go](#phase-5a-switch-to-smtp2go)
+8. [Phase 6: Brevo CRM Sync](#phase-6-brevo-crm-sync)
+9. [Phase 7: Admin Dashboard](#phase-7-admin-dashboard)
+10. [Phase 8: Polish, Testing & Pre-Launch](#phase-8-polish-testing--pre-launch)
 
 ---
 
@@ -787,6 +788,115 @@ This phase has a significant manual dependency:
 
 Please build all the code first, then I'll provide the credentials
 to connect everything.
+```
+
+---
+
+## Phase 5A: Switch to SMTP2Go
+
+### RalphWiggum Prompt — Phase 5A
+
+```
+@ralphwiggum implement docs/prds/phase-5a-switch-to-smtp2go.md
+
+Context: Phase 5 email delivery is complete using Mailgun. We need to
+swap the email provider to SMTP2Go because the Mailgun free plan only
+supports one domain and it is already in use by another application.
+The HTML template, retry strategy, fire-and-forget pattern, and
+email_logs schema all stay the same — only the send function,
+webhook endpoint, and env vars change.
+
+Execute the following tasks:
+
+TASK 5A.1 — SMTP2Go Send Function:
+- Create src/lib/email/smtp2go.ts
+- POST to https://eu-api.smtp2go.com/v3/email/send (EU endpoint)
+- Auth via X-Smtp2go-Api-Key header
+- JSON body: sender, to (array), subject, html_body, custom_headers
+- Reply-To via custom_headers: [{ header: "Reply-To", value: "razaq@e3.digital" }]
+- Return { success: true, messageId } where messageId = data.email_id
+- Return { success: false, status, body } on failure
+- PAUSE: Ask user for SMTP2GO_API_KEY
+
+TASK 5A.2 — Update Retry Logic:
+- In src/lib/email/retry.ts: change import from ./mailgun to ./smtp2go
+- Replace sendViaMailgun() with sendViaSmtp2go()
+- Remove recipientVariables from params (not used by SMTP2Go)
+- Everything else stays the same (retry delays, email_logs updates)
+
+TASK 5A.3 — SMTP2Go Webhook Endpoint:
+- Create src/app/api/webhooks/smtp2go/route.ts
+- Verify Bearer token from Authorization header against SMTP2GO_WEBHOOK_TOKEN env
+- Parse JSON body: event, email_id, rcpt, sender, subject, time
+- Map events: delivered→delivered, open→opened, click→clicked, bounce→failed, spam→bounced, reject→failed
+- Match email_id to email_logs.messageId
+- Update status and timestamp fields
+- Return 200 for unknown email_ids (idempotent)
+- PAUSE: Ask user for SMTP2GO_WEBHOOK_TOKEN
+
+TASK 5A.4 — Update Environment Config:
+- In src/libs/Env.ts: remove MAILGUN_API_KEY, MAILGUN_DOMAIN, MAILGUN_WEBHOOK_SIGNING_KEY
+- Add SMTP2GO_API_KEY and SMTP2GO_WEBHOOK_TOKEN (both optional strings)
+- Update runtimeEnv mapping
+
+TASK 5A.5 — Delete Mailgun Files:
+- Delete src/lib/email/mailgun.ts
+- Delete src/app/api/webhooks/mailgun/route.ts (entire directory)
+
+TASK 5A.6 — Update .env.example:
+- Replace Mailgun section with SMTP2Go section
+- Keys: SMTP2GO_API_KEY, SMTP2GO_WEBHOOK_TOKEN
+
+Verify: Build passes, lint passes, type-check passes, no Mailgun references remain in code. Test email send with SMTP2Go API key. Webhook endpoint returns 401 without valid token and 200 with valid token + event payload.
+```
+
+### Claude Code Interactive Prompt — Phase 5A Manual Steps
+
+```
+I need help switching the email provider from Mailgun to SMTP2Go in the
+Investor Readiness Assessment Tool. Read the PRD at
+docs/prds/phase-5a-switch-to-smtp2go.md for full details.
+
+The existing Mailgun implementation (Phase 5) is fully working but we
+need to swap it out because the Mailgun free plan only allows one domain
+and it's already in use elsewhere.
+
+Everything stays the same EXCEPT the send function, webhook endpoint,
+and env vars. The HTML template, retry logic, fire-and-forget pattern,
+and email_logs schema are unchanged.
+
+Here's the plan:
+
+1. START by creating the SMTP2Go send function (Task 5A.1) and the
+   webhook endpoint (Task 5A.3) — the code can be written before
+   having credentials.
+
+2. Update the retry logic (Task 5A.2) to import from the new module
+   and update the Env config (Task 5A.4).
+
+3. Delete the old Mailgun files (Task 5A.5) and update .env.example
+   (Task 5A.6).
+
+4. STOP and ask me for credentials.
+
+   MANUAL ACTION NEEDED: I need to:
+   - Go to smtp2go.com and create an account
+   - Verify the sender domain e3digital.net (add SPF + DKIM DNS records)
+   - Generate an API key with email send permissions
+   - Copy: API Key → SMTP2GO_API_KEY
+   - Generate a random secret token for webhook auth
+   - In SMTP2Go Settings > Webhooks, add a webhook:
+     - URL: https://assess.e3digital.net/api/webhooks/smtp2go
+     - Output: JSON
+     - Events: delivered, open, click, bounce, spam, reject
+     - Authorization header: Bearer <the token>
+   - Copy: the token → SMTP2GO_WEBHOOK_TOKEN
+   - Set both values in Railway dashboard and .env.local
+
+5. Run build + lint + type-check to confirm everything passes.
+
+Please start by writing all the code, then I'll provide credentials
+to test the integration.
 ```
 
 ---
