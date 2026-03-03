@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm';
 import { db } from '@/libs/DB';
 import { assessments, emailLogs } from '@/models/Schema';
 
-import { sendViaMailgun } from './mailgun';
+import { sendViaSmtp2go } from './smtp2go';
 import { type AssessmentEmailData, buildAssessmentResultsEmail } from './templates/assessment-results';
 
 // ── Readiness label map ──────────────────────────────────────────────────────
@@ -95,7 +95,7 @@ export async function sendAssessmentEmailWithRetry(
         await new Promise<void>(r => setTimeout(r, delay));
       }
 
-      const result = await sendViaMailgun({ to: recipientEmail, subject, html });
+      const result = await sendViaSmtp2go({ to: recipientEmail, subject, html });
 
       if (result.success) {
         // Update email_log: sent
