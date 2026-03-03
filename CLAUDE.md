@@ -170,7 +170,8 @@ The application is built in 9 incremental phases:
 | 2 | Assessment Form | Pending |
 | 3 | Submission & AI Scoring | Pending |
 | 4 | Results Page | Pending |
-| 5 | Email Delivery | Pending |
+| 5 | Email Delivery (Mailgun) | Pending |
+| 5A | Switch to SMTP2Go | Pending |
 | 6 | Brevo CRM Sync | Pending |
 | 7 | Admin Dashboard | Pending |
 | 8 | Polish, Testing & Launch | Pending |
