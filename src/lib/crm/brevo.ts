@@ -77,9 +77,9 @@ async function callBrevoUpsert(params: SyncToBrevoParams): Promise<BrevoResult> 
       ASSESSMENT_DATE: assessmentDate,
       ASSESSMENT_URL: resultsUrl,
       SOURCE: responses.contactSource ?? '',
-      TOP_GAP_1: topGaps[0]?.title ?? '',
-      TOP_GAP_2: topGaps[1]?.title ?? '',
-      TOP_GAP_3: topGaps[2]?.title ?? '',
+      TOP_GAP_1_2_3: [topGaps[0]?.title, topGaps[1]?.title, topGaps[2]?.title]
+        .filter(Boolean)
+        .join(' | '),
       HAS_PAYING_CUSTOMERS: responses.hasPayingCustomers === 'yes',
       FUNDING_STAGE: responses.investmentStage ?? '',
       TEAM_SIZE: parseTeamSize(responses.fullTimeTeamSize),
