@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 import { scoreAssessment } from '@/lib/ai/scoring';
+import { syncToBrevo } from '@/lib/crm/brevo';
 import { sendAssessmentEmailWithRetry } from '@/lib/email/retry';
 import { hashIp } from '@/lib/hash';
 import { checkRateLimit } from '@/lib/middleware/rate-limit';
@@ -157,24 +158,40 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           ? Object.entries(rawCatScores).map(([name, score]) => ({ name, score }))
           : [];
 
-        // Fire-and-forget — never await this
+        const readinessLevel = (savedAssessment.readinessLevel ?? 'early_stage') as
+          'investment_ready' | 'nearly_there' | 'early_stage' | 'too_early';
+
+        const topGaps = (savedAssessment.topGaps ?? []) as Array<{
+          title: string;
+          currentState: string;
+          recommendedActions: string[];
+        }>;
+
+        const resultsUrl = `${appUrl}/results/${savedId}`;
+
+        // Fire-and-forget — never await these
         void sendAssessmentEmailWithRetry({
           assessmentId: savedId,
           recipientEmail: responses.contactEmail,
           contactName: responses.contactName,
           contactCompany: responses.contactCompany ?? undefined,
           overallScore: savedAssessment.overallScore ?? 0,
-          readinessLevel: (savedAssessment.readinessLevel ?? 'early_stage') as
-            'investment_ready' | 'nearly_there' | 'early_stage' | 'too_early',
+          readinessLevel,
           categoryScores: catScoresForEmail,
-          topGaps: (savedAssessment.topGaps ?? []) as Array<{
-            title: string;
-            currentState: string;
-            recommendedActions: string[];
-          }>,
+          topGaps,
           quickWins: (savedAssessment.quickWins ?? []) as string[],
-          resultsUrl: `${appUrl}/results/${savedId}`,
+          resultsUrl,
           bookingUrl,
+        });
+
+        void syncToBrevo({
+          assessmentId: savedId,
+          responses,
+          overallScore: savedAssessment.overallScore ?? 0,
+          readinessLevel,
+          topGaps,
+          resultsUrl,
+          assessmentDate: savedAssessment.createdAt.toISOString(),
         });
       }
     }

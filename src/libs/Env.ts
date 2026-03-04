@@ -14,8 +14,13 @@ export const Env = createEnv({
     // Email
     SMTP2GO_API_KEY: z.string().optional(),
     SMTP2GO_WEBHOOK_TOKEN: z.string().optional(),
-    // CRM
+    // CRM (Brevo)
     BREVO_API_KEY: z.string().optional(),
+    BREVO_ASSESSMENT_LIST_ID: z.coerce.number().int().positive().optional(),
+    BREVO_INVESTMENT_READY_LIST_ID: z.coerce.number().int().positive().optional(),
+    BREVO_NEARLY_THERE_LIST_ID: z.coerce.number().int().positive().optional(),
+    BREVO_EARLY_STAGE_LIST_ID: z.coerce.number().int().positive().optional(),
+    BREVO_TOO_EARLY_LIST_ID: z.coerce.number().int().positive().optional(),
     // AI Scoring
     OPENROUTER_API_KEY: z.string().optional(),
     AI_MODEL: z.string().optional(),
@@ -51,6 +56,11 @@ export const Env = createEnv({
     SMTP2GO_API_KEY: process.env.SMTP2GO_API_KEY,
     SMTP2GO_WEBHOOK_TOKEN: process.env.SMTP2GO_WEBHOOK_TOKEN,
     BREVO_API_KEY: process.env.BREVO_API_KEY,
+    BREVO_ASSESSMENT_LIST_ID: process.env.BREVO_ASSESSMENT_LIST_ID,
+    BREVO_INVESTMENT_READY_LIST_ID: process.env.BREVO_INVESTMENT_READY_LIST_ID,
+    BREVO_NEARLY_THERE_LIST_ID: process.env.BREVO_NEARLY_THERE_LIST_ID,
+    BREVO_EARLY_STAGE_LIST_ID: process.env.BREVO_EARLY_STAGE_LIST_ID,
+    BREVO_TOO_EARLY_LIST_ID: process.env.BREVO_TOO_EARLY_LIST_ID,
     OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
     AI_MODEL: process.env.AI_MODEL,
     RECAPTCHA_SECRET_KEY: process.env.RECAPTCHA_SECRET_KEY,
