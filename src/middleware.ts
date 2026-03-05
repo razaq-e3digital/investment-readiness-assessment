@@ -1,6 +1,13 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import { NextResponse } from 'next/server';
 
-// Routes that require authentication
+// Routes that require admin role
+const isAdminRoute = createRouteMatcher([
+  '/dashboard/admin(.*)',
+  '/api/admin(.*)',
+]);
+
+// Routes that only require authentication
 const isProtectedRoute = createRouteMatcher([
   '/dashboard(.*)',
 ]);
@@ -14,7 +21,26 @@ const isPublicApiRoute = createRouteMatcher([
 export default clerkMiddleware(async (auth, req) => {
   // Skip auth check for public API routes
   if (isPublicApiRoute(req)) {
-    return;
+    return NextResponse.next();
+  }
+
+  // Admin routes: require authentication + admin role
+  if (isAdminRoute(req)) {
+    await auth.protect({
+      unauthenticatedUrl: new URL('/sign-in', req.url).toString(),
+    });
+
+    const { sessionClaims } = await auth();
+    const metadata = sessionClaims?.metadata as { role?: string } | undefined;
+
+    if (metadata?.role !== 'admin') {
+      if (req.nextUrl.pathname.startsWith('/api/')) {
+        return NextResponse.json({ error: 'forbidden' }, { status: 403 });
+      }
+      return NextResponse.redirect(new URL('/dashboard', req.url));
+    }
+
+    return NextResponse.next();
   }
 
   // Protect dashboard and other authenticated routes
@@ -23,6 +49,8 @@ export default clerkMiddleware(async (auth, req) => {
       unauthenticatedUrl: new URL('/sign-in', req.url).toString(),
     });
   }
+
+  return NextResponse.next();
 });
 
 export const config = {
