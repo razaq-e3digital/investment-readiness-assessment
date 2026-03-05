@@ -179,7 +179,7 @@ async function callOpenRouter(userContent: string): Promise<AIScoringResponse> {
       'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
       'Content-Type': 'application/json',
       'HTTP-Referer': 'https://assess.e3digital.net',
-      'X-Title': 'E3 Digital Investor Readiness — AI Calibration',
+      'X-Title': 'E3 Digital Investor Readiness - AI Calibration',
     },
     body: JSON.stringify({
       model: AI_MODEL,
