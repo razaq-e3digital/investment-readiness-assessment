@@ -31,14 +31,18 @@ export default function TextQuestion({
   const value = typeof rawValue === 'string' ? rawValue : '';
   const charCount = value.length;
 
+  const inputId = `field-${fieldName}`;
+  const errorId = `${inputId}-error`;
+
   return (
     <div className="animate-fade-in">
-      <label className="mb-1 block text-xl font-semibold text-text-primary">
+      <label htmlFor={inputId} className="mb-1 block text-xl font-semibold text-text-primary">
         {label}
-        {required && <span className="ml-1 text-score-red">*</span>}
+        {required && <span className="ml-1 text-score-red" aria-hidden="true">*</span>}
       </label>
       {helpText && <p className="mb-4 text-sm text-text-secondary">{helpText}</p>}
       <input
+        id={inputId}
         type="text"
         name={fieldName}
         value={value}
@@ -47,6 +51,9 @@ export default function TextQuestion({
         ref={ref}
         placeholder={placeholder}
         maxLength={maxLength}
+        aria-required={required}
+        aria-invalid={!!error}
+        aria-describedby={error ? errorId : undefined}
         className={cn(
           'w-full rounded-lg border border-card-border bg-white p-3 text-text-primary',
           'focus:border-accent-blue focus:outline-none focus:ring-0',
@@ -61,7 +68,9 @@ export default function TextQuestion({
         </p>
       )}
       {error && (
-        <p className="animate-fade-in mt-2 text-sm text-score-red">{error.message}</p>
+        <p id={errorId} role="alert" className="animate-fade-in mt-2 text-sm text-score-red">
+          {error.message}
+        </p>
       )}
     </div>
   );

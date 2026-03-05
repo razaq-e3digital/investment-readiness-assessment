@@ -52,11 +52,14 @@ export default function RadioCardQuestion({
     }
   };
 
+  const groupId = `radiogroup-${name}`;
+  const errorId = `${groupId}-error`;
+
   return (
     <div className="animate-fade-in">
-      <label className="mb-1 block text-xl font-semibold text-text-primary">{label}</label>
+      <p id={groupId} className="mb-1 block text-xl font-semibold text-text-primary">{label}</p>
       {helpText && <p className="mb-4 text-sm text-text-secondary">{helpText}</p>}
-      <div className="flex flex-col gap-3">
+      <div role="radiogroup" aria-labelledby={groupId} aria-required className="flex flex-col gap-3">
         {options.map((option, index) => {
           const isSelected = field.value === option.value;
           return (
@@ -116,7 +119,9 @@ export default function RadioCardQuestion({
         })}
       </div>
       {error && (
-        <p className="animate-fade-in mt-2 text-sm text-score-red">{error.message}</p>
+        <p id={errorId} role="alert" className="animate-fade-in mt-2 text-sm text-score-red">
+          {error.message}
+        </p>
       )}
     </div>
   );
