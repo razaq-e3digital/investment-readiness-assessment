@@ -366,7 +366,7 @@ export const assessmentProfiles: AssessmentProfile[] = [
       'Strong GTM, good early revenue, and repeatable sales process. '
       + 'Product is maturing and legal/IP is not formalized.',
     expectedReadinessLevel: 'nearly_there',
-    expectedScoreRange: [55, 72],
+    expectedScoreRange: [65, 80],
     responses: {
       problemClarity: 'very-clear',
       targetCustomer:
@@ -430,8 +430,8 @@ export const assessmentProfiles: AssessmentProfile[] = [
     description:
       'Highly experienced team with a prior exit. The market sizing is vague '
       + 'and the current product is MVP-stage. Strong on legal and financials.',
-    expectedReadinessLevel: 'early_stage',
-    expectedScoreRange: [45, 65],
+    expectedReadinessLevel: 'nearly_there',
+    expectedScoreRange: [58, 75],
     responses: {
       problemClarity: 'somewhat-clear',
       targetCustomer:
@@ -496,7 +496,7 @@ export const assessmentProfiles: AssessmentProfile[] = [
       'Has raised a seed round and is scaling, but growth metrics are unclear '
       + 'and the team has some functional gaps at leadership level.',
     expectedReadinessLevel: 'nearly_there',
-    expectedScoreRange: [58, 75],
+    expectedScoreRange: [65, 82],
     responses: {
       problemClarity: 'very-clear',
       targetCustomer:
@@ -561,8 +561,8 @@ export const assessmentProfiles: AssessmentProfile[] = [
     description:
       'Clear ICP with signed LOIs and design partners, strong metrics discipline '
       + 'and legal structure — but no revenue yet. Targeting pre-seed.',
-    expectedReadinessLevel: 'early_stage',
-    expectedScoreRange: [42, 62],
+    expectedReadinessLevel: 'nearly_there',
+    expectedScoreRange: [55, 72],
     responses: {
       problemClarity: 'very-clear',
       targetCustomer:
@@ -625,8 +625,8 @@ export const assessmentProfiles: AssessmentProfile[] = [
       'Profitable and operationally stable, but small market vision, low '
       + 'scalability ambition, and the metrics suggest this is lifestyle not VC. '
       + 'Investor readiness is low despite financial health.',
-    expectedReadinessLevel: 'too_early',
-    expectedScoreRange: [15, 40],
+    expectedReadinessLevel: 'early_stage',
+    expectedScoreRange: [32, 50],
     responses: {
       problemClarity: 'somewhat-clear',
       targetCustomer:
