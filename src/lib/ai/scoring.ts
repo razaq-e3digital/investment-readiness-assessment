@@ -29,6 +29,22 @@ export const AIScoringResponseSchema = z.object({
 
 export type AIScoringResponse = z.infer<typeof AIScoringResponseSchema>;
 
+// ── Deterministic level computation ──────────────────────────────────────────
+// AI models (especially free/smaller ones) sometimes assign readinessLevel
+// inconsistently with the numeric score. Always override with computed value.
+function computeReadinessLevel(score: number): AIScoringResponse['readinessLevel'] {
+  if (score >= 75) {
+    return 'investment_ready';
+  }
+  if (score >= 55) {
+    return 'nearly_there';
+  }
+  if (score >= 30) {
+    return 'early_stage';
+  }
+  return 'too_early';
+}
+
 // ── Prompt construction ───────────────────────────────────────────────────────
 
 function formatResponses(data: AssessmentResponses): string {
@@ -124,10 +140,10 @@ Scoring guide:
 - 0–19: Pre-early — not investment-ready in this area
 
 Readiness level thresholds (based on overall weighted score):
-- investment_ready: 70–100
-- nearly_there: 50–69
-- early_stage: 25–49
-- too_early: 0–24
+- investment_ready: 75–100
+- nearly_there: 55–74
+- early_stage: 30–54
+- too_early: 0–29
 
 IMPORTANT: Respond ONLY with a single valid JSON object. No markdown fences, no explanation, no preamble. \
 The JSON must exactly match this structure:
@@ -261,7 +277,7 @@ export async function scoreAssessment(responses: AssessmentResponses): Promise<A
 
   const firstResult = AIScoringResponseSchema.safeParse(parsed);
   if (firstResult.success) {
-    return firstResult.data;
+    return { ...firstResult.data, readinessLevel: computeReadinessLevel(firstResult.data.overallScore) };
   }
 
   // Second attempt — send correction prompt with the invalid response
@@ -288,7 +304,7 @@ Please respond ONLY with a corrected JSON object matching the exact schema speci
 
   const secondResult = AIScoringResponseSchema.safeParse(parsed2);
   if (secondResult.success) {
-    return secondResult.data;
+    return { ...secondResult.data, readinessLevel: computeReadinessLevel(secondResult.data.overallScore) };
   }
 
   throw new Error(
