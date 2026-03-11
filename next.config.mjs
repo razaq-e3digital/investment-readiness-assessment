@@ -24,12 +24,17 @@ const cspHeader = [
   `script-src 'self' 'unsafe-inline'${isDev ? ' \'unsafe-eval\'' : ''} https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/ https://www.googletagmanager.com https://va.vercel-scripts.com`,
   // Styles: self + inline (required by Tailwind / next-themes)
   `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`,
-  // Fonts
+  // Fonts: self + Google Fonts only. Browser extensions (e.g. Perplexity AI) may
+  // inject fonts from r2cdn.perplexity.ai or data: URIs and trigger CSP violations
+  // in the user's console — this is expected and intentional; do not add data: or
+  // third-party CDNs here.
   `font-src 'self' https://fonts.gstatic.com`,
   // Images: self + data URIs + GA + Clerk avatar CDN
   `img-src 'self' data: https://img.clerk.com https://www.googletagmanager.com https://www.google-analytics.com`,
   // Connect: API calls from browser (Sentry, GA4, Clerk, reCAPTCHA, OpenRouter)
-  `connect-src 'self' https://*.sentry.io https://o*.ingest.sentry.io https://www.google-analytics.com https://analytics.google.com https://*.clerk.accounts.dev https://clerk.e3digital.net https://openrouter.ai`,
+  // Sentry: use *.ingest.de.sentry.io (EU endpoint). Mid-hostname wildcards like
+  // o*.ingest.sentry.io are invalid CSP syntax and are silently ignored by browsers.
+  `connect-src 'self' https://*.ingest.de.sentry.io https://www.google-analytics.com https://analytics.google.com https://*.clerk.accounts.dev https://clerk.e3digital.net https://openrouter.ai`,
   // Frames: Clerk uses iframes for OAuth popups; reCAPTCHA uses iframes
   `frame-src https://accounts.google.com https://www.google.com/recaptcha/ https://*.clerk.accounts.dev`,
   // Workers: Next.js service workers in production
