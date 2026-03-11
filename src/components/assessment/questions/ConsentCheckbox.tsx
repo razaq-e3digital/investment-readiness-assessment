@@ -4,12 +4,14 @@ import Link from 'next/link';
 import { useController, useFormContext } from 'react-hook-form';
 
 import type { AssessmentFormData } from '@/types/assessment';
+import { cn } from '@/utils/Helpers';
 
 type ConsentCheckboxProps = {
   name: keyof AssessmentFormData;
+  animationDelay?: number;
 };
 
-export default function ConsentCheckbox({ name }: ConsentCheckboxProps) {
+export default function ConsentCheckbox({ name, animationDelay = 0 }: ConsentCheckboxProps) {
   const { control } = useFormContext<AssessmentFormData>();
   const {
     field,
@@ -17,7 +19,10 @@ export default function ConsentCheckbox({ name }: ConsentCheckboxProps) {
   } = useController({ name, control });
 
   return (
-    <div className="animate-fade-in">
+    <div
+      className={cn(error ? 'animate-shake' : 'animate-fade-in')}
+      style={!error ? { animationDelay: `${animationDelay}ms` } : undefined}
+    >
       <div className="flex items-start gap-3">
         <input
           id="consent-checkbox"

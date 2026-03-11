@@ -11,6 +11,7 @@ type EmailQuestionProps = {
   placeholder?: string;
   helpText?: string;
   required?: boolean;
+  animationDelay?: number;
 };
 
 export default function EmailQuestion({
@@ -19,6 +20,7 @@ export default function EmailQuestion({
   placeholder,
   helpText,
   required,
+  animationDelay = 0,
 }: EmailQuestionProps) {
   const { control } = useFormContext<AssessmentFormData>();
   const {
@@ -32,7 +34,10 @@ export default function EmailQuestion({
   const errorId = `${inputId}-error`;
 
   return (
-    <div className="animate-fade-in">
+    <div
+      className={cn(error ? 'animate-shake' : 'animate-fade-in')}
+      style={!error ? { animationDelay: `${animationDelay}ms` } : undefined}
+    >
       <label htmlFor={inputId} className="mb-1 block text-xl font-semibold text-text-primary">
         {label}
         {required && <span className="ml-1 text-score-red" aria-hidden="true">*</span>}

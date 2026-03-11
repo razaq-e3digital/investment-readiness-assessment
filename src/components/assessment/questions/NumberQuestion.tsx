@@ -14,6 +14,7 @@ type NumberQuestionProps = {
   prefix?: string;
   suffix?: string;
   min?: number;
+  animationDelay?: number;
 };
 
 export default function NumberQuestion({
@@ -24,6 +25,7 @@ export default function NumberQuestion({
   required,
   prefix,
   suffix,
+  animationDelay = 0,
 }: NumberQuestionProps) {
   const { control } = useFormContext<AssessmentFormData>();
   const {
@@ -34,7 +36,10 @@ export default function NumberQuestion({
   const value = typeof rawValue === 'string' ? rawValue : '';
 
   return (
-    <div className="animate-fade-in">
+    <div
+      className={cn(error ? 'animate-shake' : 'animate-fade-in')}
+      style={!error ? { animationDelay: `${animationDelay}ms` } : undefined}
+    >
       <label className="mb-1 block text-xl font-semibold text-text-primary">
         {label}
         {required && <span className="ml-1 text-score-red">*</span>}
