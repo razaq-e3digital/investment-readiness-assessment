@@ -270,7 +270,13 @@ export default function AssessmentForm() {
     let recaptchaToken = '';
     const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
     if (siteKey) {
-      recaptchaToken = await getRecaptchaToken(siteKey, 'assessment_submit');
+      try {
+        recaptchaToken = await getRecaptchaToken(siteKey, 'assessment_submit');
+      } catch {
+        // Belt-and-suspenders: the recaptcha module handles errors internally
+        // but the form must never crash regardless of reCAPTCHA state
+        recaptchaToken = '';
+      }
     }
 
     // Show the processing screen — it handles the API call from here
