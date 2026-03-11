@@ -12,6 +12,7 @@ type TextareaQuestionProps = {
   helpText?: string;
   maxLength?: number;
   required?: boolean;
+  animationDelay?: number;
 };
 
 export default function TextareaQuestion({
@@ -21,6 +22,7 @@ export default function TextareaQuestion({
   helpText,
   maxLength,
   required,
+  animationDelay = 0,
 }: TextareaQuestionProps) {
   const { control } = useFormContext<AssessmentFormData>();
   const {
@@ -42,7 +44,10 @@ export default function TextareaQuestion({
   const errorId = `${textareaId}-error`;
 
   return (
-    <div className="animate-fade-in">
+    <div
+      className={cn(error ? 'animate-shake' : 'animate-fade-in')}
+      style={!error ? { animationDelay: `${animationDelay}ms` } : undefined}
+    >
       <label htmlFor={textareaId} className="mb-1 block text-xl font-semibold text-text-primary">
         {label}
         {required && <span className="ml-1 text-score-red" aria-hidden="true">*</span>}

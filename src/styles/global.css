@@ -138,3 +138,42 @@
 .animate-fade-in {
   animation: fade-in 0.2s ease forwards;
 }
+@keyframes slide-out-left {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+}
+@keyframes slide-out-right {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+}
+.animate-slide-out-left {
+  animation: slide-out-left 0.2s ease forwards;
+}
+.animate-slide-out-right {
+  animation: slide-out-right 0.2s ease forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-slide-in-right,
+  .animate-slide-in-left,
+  .animate-slide-out-left,
+  .animate-slide-out-right,
+  .animate-shake,
+  .animate-fade-in {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}

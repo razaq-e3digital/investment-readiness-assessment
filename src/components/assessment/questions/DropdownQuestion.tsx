@@ -13,6 +13,7 @@ type DropdownQuestionProps = {
   placeholder?: string;
   helpText?: string;
   required?: boolean;
+  animationDelay?: number;
 };
 
 export default function DropdownQuestion({
@@ -22,6 +23,7 @@ export default function DropdownQuestion({
   placeholder,
   helpText,
   required,
+  animationDelay = 0,
 }: DropdownQuestionProps) {
   const { control } = useFormContext<AssessmentFormData>();
   const {
@@ -32,7 +34,10 @@ export default function DropdownQuestion({
   const value = typeof rawValue === 'string' ? rawValue : '';
 
   return (
-    <div className="animate-fade-in">
+    <div
+      className={cn(error ? 'animate-shake' : 'animate-fade-in')}
+      style={!error ? { animationDelay: `${animationDelay}ms` } : undefined}
+    >
       <label className="mb-1 block text-xl font-semibold text-text-primary">
         {label}
         {required && <span className="ml-1 text-score-red">*</span>}

@@ -11,6 +11,7 @@ type RadioCardQuestionProps = {
   label: string;
   options: OptionItem[];
   helpText?: string;
+  animationDelay?: number;
 };
 
 export default function RadioCardQuestion({
@@ -18,6 +19,7 @@ export default function RadioCardQuestion({
   label,
   options,
   helpText,
+  animationDelay = 0,
 }: RadioCardQuestionProps) {
   const { control } = useFormContext<AssessmentFormData>();
   const {
@@ -56,7 +58,10 @@ export default function RadioCardQuestion({
   const errorId = `${groupId}-error`;
 
   return (
-    <div className="animate-fade-in">
+    <div
+      className={cn(error ? 'animate-shake' : 'animate-fade-in')}
+      style={!error ? { animationDelay: `${animationDelay}ms` } : undefined}
+    >
       <p id={groupId} className="mb-1 block text-xl font-semibold text-text-primary">{label}</p>
       {helpText && <p className="mb-4 text-sm text-text-secondary">{helpText}</p>}
       <div role="radiogroup" aria-labelledby={groupId} aria-required className="flex flex-col gap-3">

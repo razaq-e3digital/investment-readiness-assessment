@@ -11,6 +11,7 @@ type MultiSelectQuestionProps = {
   label: string;
   options: OptionItem[];
   helpText?: string;
+  animationDelay?: number;
 };
 
 export default function MultiSelectQuestion({
@@ -18,6 +19,7 @@ export default function MultiSelectQuestion({
   label,
   options,
   helpText,
+  animationDelay = 0,
 }: MultiSelectQuestionProps) {
   const { control } = useFormContext<AssessmentFormData>();
   const {
@@ -46,7 +48,10 @@ export default function MultiSelectQuestion({
   const errorId = `${groupId}-error`;
 
   return (
-    <div className="animate-fade-in">
+    <div
+      className={cn(error ? 'animate-shake' : 'animate-fade-in')}
+      style={!error ? { animationDelay: `${animationDelay}ms` } : undefined}
+    >
       <p id={groupId} className="mb-1 block text-xl font-semibold text-text-primary">{label}</p>
       {helpText && <p className="mb-4 text-sm text-text-secondary">{helpText}</p>}
       <div role="group" aria-labelledby={groupId} className="flex flex-col gap-3">

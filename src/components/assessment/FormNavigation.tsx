@@ -4,6 +4,7 @@ type FormNavigationProps = {
   onBack: () => void;
   onNext: () => void;
   isSubmitting?: boolean;
+  disabled?: boolean;
 };
 
 export default function FormNavigation({
@@ -12,6 +13,7 @@ export default function FormNavigation({
   onBack,
   onNext,
   isSubmitting,
+  disabled,
 }: FormNavigationProps) {
   const isLastSection = currentSection === totalSections - 1;
 
@@ -32,8 +34,8 @@ export default function FormNavigation({
         <button
           type="button"
           onClick={onNext}
-          disabled={isSubmitting}
-          className="rounded-lg bg-accent-blue px-6 py-3 text-base font-semibold text-white hover:bg-accent-blue-hover disabled:cursor-not-allowed disabled:opacity-60"
+          disabled={isSubmitting || disabled}
+          className="rounded-lg bg-accent-blue px-6 py-3 text-base font-semibold text-white transition-all duration-150 hover:scale-[1.02] hover:bg-accent-blue-hover active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isSubmitting
             ? 'Submitting...'

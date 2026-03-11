@@ -28,7 +28,7 @@ type ProcessingData = {
   recaptchaToken: string;
 };
 
-function QuestionDispatcher({ question }: { question: QuestionDef }) {
+function QuestionDispatcher({ question, animationDelay }: { question: QuestionDef; animationDelay: number }) {
   switch (question.type) {
     case 'text':
       return (
@@ -39,6 +39,7 @@ function QuestionDispatcher({ question }: { question: QuestionDef }) {
           helpText={question.helpText}
           maxLength={question.maxLength}
           required={question.required}
+          animationDelay={animationDelay}
         />
       );
     case 'textarea':
@@ -50,6 +51,7 @@ function QuestionDispatcher({ question }: { question: QuestionDef }) {
           helpText={question.helpText}
           maxLength={question.maxLength}
           required={question.required}
+          animationDelay={animationDelay}
         />
       );
     case 'email':
@@ -60,6 +62,7 @@ function QuestionDispatcher({ question }: { question: QuestionDef }) {
           placeholder={question.placeholder}
           helpText={question.helpText}
           required={question.required}
+          animationDelay={animationDelay}
         />
       );
     case 'number':
@@ -73,6 +76,7 @@ function QuestionDispatcher({ question }: { question: QuestionDef }) {
           prefix={question.prefix}
           suffix={question.suffix}
           min={question.min}
+          animationDelay={animationDelay}
         />
       );
     case 'radio':
@@ -82,6 +86,7 @@ function QuestionDispatcher({ question }: { question: QuestionDef }) {
           label={question.label}
           options={question.options}
           helpText={question.helpText}
+          animationDelay={animationDelay}
         />
       );
     case 'multiselect':
@@ -91,6 +96,7 @@ function QuestionDispatcher({ question }: { question: QuestionDef }) {
           label={question.label}
           options={question.options}
           helpText={question.helpText}
+          animationDelay={animationDelay}
         />
       );
     case 'dropdown':
@@ -102,18 +108,19 @@ function QuestionDispatcher({ question }: { question: QuestionDef }) {
           placeholder={question.placeholder}
           helpText={question.helpText}
           required={question.required}
+          animationDelay={animationDelay}
         />
       );
     case 'checkbox':
-      return <ConsentCheckbox name={question.fieldName} />;
+      return <ConsentCheckbox name={question.fieldName} animationDelay={animationDelay} />;
     default:
       return null;
   }
 }
 
-function SectionRenderer({ sectionIndex }: { sectionIndex: number }) {
+function SectionRenderer({ sectionIndex, shakeKey }: { sectionIndex: number; shakeKey: number }) {
   // Hooks must be called before any early returns (Rules of Hooks)
-  const { watch } = useFormContext<AssessmentFormData>();
+  const { watch, formState: { errors } } = useFormContext<AssessmentFormData>();
   const hasPayingCustomers = watch('hasPayingCustomers');
 
   const section = assessmentSections[sectionIndex];
@@ -131,7 +138,7 @@ function SectionRenderer({ sectionIndex }: { sectionIndex: number }) {
       </div>
 
       <div className="space-y-8 rounded-xl border border-card-border bg-white p-6 md:p-8">
-        {section.questions.map((question) => {
+        {section.questions.map((question, index) => {
           if (question.conditional) {
             const watchedValue
               = question.conditional.fieldName === 'hasPayingCustomers'
@@ -142,11 +149,25 @@ function SectionRenderer({ sectionIndex }: { sectionIndex: number }) {
             }
           }
 
-          return <QuestionDispatcher key={question.fieldName} question={question} />;
+          const hasError = errors[question.fieldName] !== undefined;
+          const questionKey = hasError ? `${question.fieldName}-err-${shakeKey}` : question.fieldName;
+          const animationDelay = Math.min(index * 100, 500);
+
+          return (
+            <QuestionDispatcher
+              key={questionKey}
+              question={question}
+              animationDelay={animationDelay}
+            />
+          );
         })}
 
         {sectionIndex === assessmentSections.length - 1 && (
-          <ConsentCheckbox name="consentChecked" />
+          <ConsentCheckbox
+            key={errors.consentChecked !== undefined ? `consentChecked-err-${shakeKey}` : 'consentChecked'}
+            name="consentChecked"
+            animationDelay={Math.min(section.questions.length * 100, 500)}
+          />
         )}
       </div>
     </div>
@@ -156,6 +177,8 @@ function SectionRenderer({ sectionIndex }: { sectionIndex: number }) {
 export default function AssessmentForm() {
   const [currentSection, setCurrentSection] = useState(0);
   const [direction, setDirection] = useState<'forward' | 'backward'>('forward');
+  const [isExiting, setIsExiting] = useState(false);
+  const [shakeKey, setShakeKey] = useState(0);
   const [completedSections, setCompletedSections] = useState<Set<number>>(new Set());
   const [processingData, setProcessingData] = useState<ProcessingData | null>(null);
 
@@ -221,6 +244,9 @@ export default function AssessmentForm() {
   const totalSections = assessmentSections.length;
 
   const handleNext = async () => {
+    if (isExiting) {
+      return;
+    }
     const values = methods.getValues();
     const validator = sectionValidators[currentSection];
     if (!validator) {
@@ -231,18 +257,30 @@ export default function AssessmentForm() {
       Object.entries(result.errors).forEach(([field, message]) => {
         methods.setError(field as keyof AssessmentFormData, { message });
       });
+      setShakeKey(prev => prev + 1);
       return;
     }
     setCompletedSections(prev => new Set([...prev, currentSection]));
     setDirection('forward');
-    setCurrentSection(prev => Math.min(prev + 1, totalSections - 1));
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setIsExiting(true);
+    setTimeout(() => {
+      setCurrentSection(prev => Math.min(prev + 1, totalSections - 1));
+      setIsExiting(false);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 200);
   };
 
   const handleBack = () => {
+    if (isExiting) {
+      return;
+    }
     setDirection('backward');
-    setCurrentSection(prev => Math.max(prev - 1, 0));
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setIsExiting(true);
+    setTimeout(() => {
+      setCurrentSection(prev => Math.max(prev - 1, 0));
+      setIsExiting(false);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 200);
   };
 
   const handleNavigate = (index: number) => {
@@ -253,6 +291,9 @@ export default function AssessmentForm() {
   };
 
   const handleSubmit = async () => {
+    if (isExiting) {
+      return;
+    }
     const values = methods.getValues();
     const validator = sectionValidators[currentSection];
     if (!validator) {
@@ -263,6 +304,7 @@ export default function AssessmentForm() {
       Object.entries(result.errors).forEach(([field, message]) => {
         methods.setError(field as keyof AssessmentFormData, { message });
       });
+      setShakeKey(prev => prev + 1);
       return;
     }
 
@@ -311,7 +353,9 @@ export default function AssessmentForm() {
   }
 
   const isLastSection = currentSection === totalSections - 1;
-  const animClass = direction === 'forward' ? 'animate-slide-in-right' : 'animate-slide-in-left';
+  const exitClass = direction === 'forward' ? 'animate-slide-out-left' : 'animate-slide-out-right';
+  const enterClass = direction === 'forward' ? 'animate-slide-in-right' : 'animate-slide-in-left';
+  const animClass = isExiting ? exitClass : enterClass;
   const sectionTitles = assessmentSections.map(s => s.title);
 
   return (
@@ -343,7 +387,7 @@ export default function AssessmentForm() {
 
         <main className="mx-auto max-w-2xl px-6 pb-8">
           <div key={currentSection} className={animClass}>
-            <SectionRenderer sectionIndex={currentSection} />
+            <SectionRenderer sectionIndex={currentSection} shakeKey={shakeKey} />
           </div>
 
           <FormNavigation
@@ -352,6 +396,7 @@ export default function AssessmentForm() {
             onBack={handleBack}
             onNext={isLastSection ? handleSubmit : handleNext}
             isSubmitting={false}
+            disabled={isExiting}
           />
         </main>
 
