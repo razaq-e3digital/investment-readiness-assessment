@@ -22,6 +22,9 @@ For phases with **manual steps** (external service setup, API key configuration,
 8. [Phase 6: Brevo CRM Sync](#phase-6-brevo-crm-sync)
 9. [Phase 7: Admin Dashboard](#phase-7-admin-dashboard)
 10. [Phase 8: Polish, Testing & Pre-Launch](#phase-8-polish-testing--pre-launch)
+11. [Phase 9A: Fix reCAPTCHA Resilience](#phase-9a-fix-recaptcha-resilience)
+12. [Phase 9B: Fix CSP connect-src Invalid Sources](#phase-9b-fix-csp-connect-src-invalid-sources)
+13. [Phase 9C: Enhance Typeform-Style Animations](#phase-9c-enhance-typeform-style-animations)
 
 ---
 
@@ -1250,6 +1253,250 @@ accessibility) and flag each manual step as we reach it.
 
 ---
 
+## Phase 9A: Fix reCAPTCHA Resilience
+
+### RalphWiggum Prompt — Phase 9A
+
+```
+@ralphwiggum implement docs/prds/phase-9a-fix-recaptcha-resilience.md
+
+Context: Users cannot complete the assessment because Google's
+reCAPTCHA v3 script throws an uncaught exception when the site key
+is invalid or misconfigured. The app silently fails at submission.
+The fix must ensure reCAPTCHA failures never block form submission.
+
+Execute the following tasks in order:
+
+TASK 9A.1 — Circuit Breaker for Script Loading:
+- In src/lib/recaptcha.ts, add a module-level recaptchaLoadFailed
+  boolean flag (default false)
+- In loadRecaptchaScript(): if siteKey is empty/falsy, set flag
+  to true and return immediately without creating a script tag
+- Add onerror handler on the script element that sets the flag
+- Add a global window error listener scoped to reCAPTCHA errors
+  (check event.filename contains "recaptcha") that calls
+  event.preventDefault() to suppress uncaught exceptions
+- Register the global handler in loadRecaptchaScript() (once,
+  guarded by a module-level boolean)
+
+TASK 9A.2 — Defensive Token Generation:
+- In src/lib/recaptcha.ts getRecaptchaToken(): check
+  recaptchaLoadFailed flag first, return '' immediately if true
+- Wrap the entire ready() + execute() chain in try/catch at the
+  outermost level (belt-and-suspenders with existing catch)
+- Add a 5-second timeout: if grecaptcha.ready() never fires,
+  resolve with '' via setTimeout + clearTimeout pattern
+- Use console.warn (not console.error) for failures
+
+TASK 9A.3 — Form Submission Guard:
+- In src/components/assessment/AssessmentForm.tsx handleSubmit():
+  wrap the getRecaptchaToken() call in try/catch, set
+  recaptchaToken = '' on any error and continue to
+  setProcessingData()
+- This is a final safety net — recaptcha module should handle
+  errors internally but the form must never crash
+
+TASK 9A.4 — Environment Documentation:
+- In .env, add a comment on the NEXT_PUBLIC_RECAPTCHA_SITE_KEY
+  line: "# Leave empty to disable bot protection (submissions
+  still work)"
+
+TASK 9A.5 — Unit Tests:
+- Create src/lib/__tests__/recaptcha.test.ts
+- Test: empty site key skips script loading
+- Test: getRecaptchaToken returns '' when load failed
+- Test: getRecaptchaToken returns '' on execute error
+- Test: getRecaptchaToken returns '' after 5s timeout
+- Test: happy path returns token string
+- Mock window.grecaptcha and document.createElement
+
+Verify: Build passes, lint passes, all tests pass. Manually test
+with empty NEXT_PUBLIC_RECAPTCHA_SITE_KEY — form should submit
+and redirect to results.
+```
+
+### Claude Code Interactive Prompt — Phase 9A
+
+```
+I need help fixing a critical production bug where the assessment
+form silently fails when users try to submit. Read the PRD at
+docs/prds/phase-9a-fix-recaptcha-resilience.md.
+
+Root cause: Google's reCAPTCHA v3 script throws an uncaught error
+when the site key is invalid. The error crashes the promise chain
+before the ProcessingScreen can appear.
+
+The fix has three layers of defence:
+1. Circuit breaker in the recaptcha module (suppress errors at
+   source)
+2. Timeout protection (5s max wait for grecaptcha.ready)
+3. try/catch in the form's handleSubmit (final safety net)
+
+No manual steps needed — this is purely a code fix. Please
+implement all tasks and run the build + tests to verify.
+```
+
+---
+
+## Phase 9B: Fix CSP connect-src Invalid Sources
+
+### RalphWiggum Prompt — Phase 9B
+
+```
+@ralphwiggum implement docs/prds/phase-9b-fix-csp-connect-src.md
+
+Context: The CSP connect-src directive in next.config.mjs contains
+invalid wildcard patterns (https://o*.ingest.sentry.io) that
+browsers reject. This blocks direct Sentry error reporting and
+generates 15+ console warnings per page load. The Sentry DSN uses
+the EU data centre (ingest.de.sentry.io), which the current CSP
+does not match.
+
+Execute the following tasks:
+
+TASK 9B.1 — Fix connect-src Sentry Pattern:
+- In next.config.mjs, line 32 (connect-src directive):
+  - Remove: https://*.sentry.io https://o*.ingest.sentry.io
+  - Add: https://*.ingest.de.sentry.io
+  - This uses a valid subdomain wildcard matching the EU Sentry
+    ingest endpoint from the DSN in .env
+- Keep all other connect-src entries unchanged
+
+TASK 9B.2 — Add Documentation Comment:
+- Add inline comment above the font-src line in next.config.mjs:
+  "// Note: browser extensions (e.g. Perplexity AI) may trigger
+  // font-src CSP violations in user consoles — this is expected
+  // and intentional. Do not add data: to font-src."
+
+Verify: Build passes, no CSP "invalid source" warnings in browser
+console. Test that Sentry error reporting works (throw a test
+error in browser console and verify it appears in Sentry dashboard).
+```
+
+### Claude Code Interactive Prompt — Phase 9B
+
+```
+I need help fixing CSP (Content Security Policy) warnings in
+production. Read the PRD at docs/prds/phase-9b-fix-csp-connect-src.md.
+
+The browser console shows "invalid source: https://o*.ingest.sentry.io"
+because the * wildcard is mid-hostname (invalid CSP syntax). Also,
+the actual Sentry endpoint is ingest.de.sentry.io (EU), not
+ingest.sentry.io.
+
+This is a one-line fix in next.config.mjs. No manual steps needed.
+Please make the change and verify the build passes.
+```
+
+---
+
+## Phase 9C: Enhance Typeform-Style Animations
+
+### RalphWiggum Prompt — Phase 9C
+
+```
+@ralphwiggum implement docs/prds/phase-9c-enhance-typeform-animations.md
+
+Context: The assessment form has section-level slide transitions
+but the Phase 2 PRD specifies a more polished Typeform-style
+experience. Questions appear simultaneously instead of staggered,
+there is no exit animation when leaving a section, the error shake
+animation is defined in CSS but never applied, and buttons lack
+hover scale/active press microinteractions.
+
+Execute the following tasks in order:
+
+TASK 9C.1 — Staggered Question Fade-In:
+- In AssessmentForm.tsx SectionRenderer: pass animationDelay prop
+  to QuestionDispatcher based on question index (index * 100ms,
+  capped at 500ms)
+- In QuestionDispatcher: forward animationDelay to each question
+  component
+- In every question component (TextQuestion, TextareaQuestion,
+  EmailQuestion, NumberQuestion, RadioCardQuestion,
+  MultiSelectQuestion, DropdownQuestion, ConsentCheckbox):
+  - Add animationDelay prop (number, default 0)
+  - Apply as style={{ animationDelay: `${animationDelay}ms` }}
+    on the animate-fade-in container div
+- For ConsentCheckbox rendered at end of last section
+  (AssessmentForm.tsx line 148-150): wrap in a div with
+  animationDelay = min(section.questions.length * 100, 500)
+
+TASK 9C.2 — Section Exit Animation:
+- Add new CSS keyframes to src/styles/global.css:
+  - slide-out-left: opacity 1→0, translateX(0→-30px), 200ms ease
+  - slide-out-right: opacity 1→0, translateX(0→30px), 200ms ease
+  - Classes: .animate-slide-out-left, .animate-slide-out-right
+- In AssessmentForm.tsx:
+  - Add isExiting state (boolean, default false)
+  - In handleNext (after validation passes): set isExiting=true,
+    after 200ms timeout set currentSection, direction, isExiting=false
+  - In handleBack: same pattern with backward direction
+  - Apply exit class when isExiting is true:
+    forward → animate-slide-out-left
+    backward → animate-slide-out-right
+  - When not exiting, use existing animate-slide-in-* classes
+
+TASK 9C.3 — Error Shake Animation:
+- In each question component: detect when the field has an error
+  via useFormContext errors
+- When error is present: add animate-shake class to the question
+  container alongside animate-fade-in
+- Use a shakeKey approach: in the form navigation (handleNext),
+  when validation fails, increment a shakeKey counter in state
+  and pass it to SectionRenderer as a key suffix to force
+  remount and re-trigger the shake animation
+- Alternative: use a simple key={error ? `err-${Date.now()}` : name}
+  pattern (simpler, acceptable for this use case)
+
+TASK 9C.4 — Button Microinteractions:
+- In FormNavigation.tsx: add to the Continue and Submit buttons:
+  transition-all duration-150 hover:scale-[1.02] active:scale-[0.98]
+- Do NOT add scale to the Back text link
+
+TASK 9C.5 — Reduced Motion Support:
+- Add to src/styles/global.css a @media (prefers-reduced-motion:
+  reduce) block that disables all custom animations:
+  set animation: none, opacity: 1, transform: none on all
+  animate-* classes
+
+Verify: Build passes, lint passes (run npm run lint:fix first),
+all tests pass. Manually test: questions stagger in, sections
+animate out then in, errors shake, buttons scale on hover/press,
+reduced-motion disables all animations.
+```
+
+### Claude Code Interactive Prompt — Phase 9C
+
+```
+I need help enhancing the Typeform-style animations on the
+assessment form. Read the PRD at
+docs/prds/phase-9c-enhance-typeform-animations.md.
+
+The current implementation has section-level slide transitions
+but lacks:
+1. Staggered question fade-in (questions appear simultaneously)
+2. Exit animation (old section disappears instantly)
+3. Error shake (CSS defined but never applied)
+4. Button hover/press microinteractions
+
+All changes are pure CSS + minor React state management. No new
+dependencies needed. The existing tailwindcss-animate plugin and
+custom keyframes in global.css provide the foundation.
+
+Important constraints:
+- All animations must use CSS only (transform + opacity for GPU
+  acceleration)
+- Must respect prefers-reduced-motion
+- Must not break existing E2E tests (exit animation adds 200ms
+  delay to navigation)
+- Must maintain 60fps on mobile
+
+Please implement all 5 tasks and verify with build + lint + tests.
+```
+
+---
+
 ## Execution Order Summary
 
 ```
@@ -1262,6 +1509,9 @@ Phase 5 (Email)           → Pause for Mailgun credentials + DNS setup
 Phase 6 (CRM Sync)       → Pause for Brevo credentials + list setup
 Phase 7 (Admin Dashboard) → Mostly automated, pause for Clerk admin role
 Phase 8 (Polish + Launch) → Multiple manual pauses (Semgrep, AI review, email test, beta, deploy)
+Phase 9A (reCAPTCHA Fix)  → Fully automated (no external dependencies) — CRITICAL BUG FIX
+Phase 9B (CSP Fix)        → Fully automated (one-line config fix) — HIGH PRIORITY
+Phase 9C (Animations)     → Fully automated (CSS + minor React state) — MEDIUM PRIORITY
 ```
 
 ## Manual Steps Checklist (All Phases)
