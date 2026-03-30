@@ -100,7 +100,7 @@
     "tailwindcss": "^3.4.14",
     "tailwindcss-animate": "^1.0.7",
     "tsx": "^4.19.1",
-    "typescript": "^5.6.3",
+    "typescript": "^5.9.3",
     "vite-tsconfig-paths": "^5.0.1",
     "vitest": "^2.1.9",
     "vitest-fail-on-console": "^0.7.1"
@@ -109,5 +109,22 @@
     "commitizen": {
       "path": "@commitlint/cz-commitlint"
     }
-  }
+  },
+  "description": "<p align=\"center\">   <a href=\"https://react-saas.com\"><img height=\"300\" src=\"public/assets/images/nextjs-starter-banner.png?raw=true\" alt=\"Next.js SaaS Template\"></a> </p>",
+  "main": "lint-staged.config.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/razaq-e3digital/investment-readiness-assessment.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/razaq-e3digital/investment-readiness-assessment/issues"
+  },
+  "homepage": "https://github.com/razaq-e3digital/investment-readiness-assessment#readme"
 }
