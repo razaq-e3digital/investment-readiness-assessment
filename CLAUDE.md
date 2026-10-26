@@ -2,7 +2,7 @@
 
 ## Quick Reference
 
-**Stack:** Next.js 14 App Router · TypeScript · Tailwind · shadcn/ui · Clerk · Drizzle ORM · PostgreSQL (Railway) · Sentry (EU) · OpenRouter AI
+**Stack:** Next.js 14 App Router · TypeScript · Tailwind · shadcn/ui · Clerk · Drizzle ORM · PostgreSQL (Railway) · Sentry (EU) · OpenRouter AI · SMTP2Go (email) · Brevo (CRM)
 
 **Brand:** E3 Digital
 
@@ -62,32 +62,17 @@ This repo enforces **Conventional Commits** via commitlint + Husky.
 
 ## Git Workflow
 
-### Always check for merge conflicts before pushing
-Before pushing a branch or creating a PR, always rebase onto the latest target branch to resolve conflicts locally:
-```bash
-git fetch origin main
-git rebase origin/main
-# Resolve any conflicts, then:
-git push -u origin <branch-name> --force-with-lease
-```
-This prevents PRs from having merge conflicts that block CI or require manual resolution in the GitHub UI. Catching conflicts early (locally) is far easier than resolving them later.
+General branch, commit, secrets and PR review rules come from the global `~/.claude/CLAUDE.md`.
+Additions for this repo:
 
-### Post-Implementation Workflow (mandatory after every feature)
-```bash
-npm run build
-npm run lint && npm run check-types    # note: check-types not type-check
-npm run test
-git fetch origin main && git rebase origin/main   # ensure no conflicts
-git checkout -b feature/<name>
-git add -A && git reset HEAD .env.local            # never commit secrets
-git commit -m "feat(scope): lowercase description"
-git push -u origin feature/<name>
-```
-
-### Staging secrets safely
-```bash
-git add -A && git reset HEAD .env.local
-```
+- Before pushing, rebase onto the latest `main` so the PR has no conflicts:
+  `git fetch origin main && git rebase origin/main`, then `git push --force-with-lease`.
+- Checks to run after every feature, in order:
+  ```bash
+  npm run build
+  npm run lint && npm run check-types    # note: check-types not type-check
+  npm run test
+  ```
 
 ---
 
@@ -140,22 +125,25 @@ git add -A && git reset HEAD .env.local
 
 ```
 src/
-├── app/          # Next.js App Router pages
-├── components/   # Shadcn UI components (install via: npx shadcn-ui add <component>)
-├── features/     # Feature modules (business logic)
+├── app/          # App Router: (auth)/, assessment/, results/, privacy/, terms/, api/{admin,assessment,webhooks}
+├── components/   # shadcn/ui components (install via: npx shadcn-ui add <component>)
+├── data/         # Static data
+├── features/     # Feature modules (auth, dashboard)
 ├── hooks/        # Custom React hooks
-├── libs/         # Library utilities (Clerk, DB client, Env)
-├── locales/      # i18n translation JSON files (next-intl)
-├── models/       # Drizzle ORM schemas
+├── lib/          # Integrations: ai/, auth/, crm/, email/, middleware/, validation/, hash.ts, recaptcha.ts
+├── libs/         # Core: DB.ts, Env.ts, Logger.ts (pino only, no Logtail)
+├── models/       # Drizzle ORM schema (Schema.ts)
 ├── styles/       # Global CSS
-├── templates/    # Page layout templates
 ├── types/        # Shared TypeScript types
-└── utils/        # Utility functions (Helpers.ts for Shadcn cn())
+└── utils/        # Utility functions (Helpers.ts for cn(), analytics.ts)
 
 docs/
-├── prds/         # Phase-based PRDs (phase-0 through phase-8)
+├── prds/         # Phase PRDs (phase-0 through phase-9c)
 └── RalphWiggumPrompts.md  # Implementation prompts (RalphWiggum + Claude Code Interactive)
 ```
+
+Note both `lib/` (integrations) and `libs/` (core) exist. ESLint ignores `docs/**` and `**/*.md`
+because the PRDs contain TypeScript code blocks; keep that in `eslint.config.mjs`.
 
 ---
 
@@ -165,16 +153,12 @@ The application is built in 9 incremental phases:
 
 | Phase | Name | Status |
 |-------|------|--------|
-| 0 | Boilerplate Setup | ✅ Complete (PR #2) |
-| 1 | Landing Page & Design System | ✅ Complete (PR #4) |
-| 2 | Assessment Form | Pending |
-| 3 | Submission & AI Scoring | Pending |
-| 4 | Results Page | Pending |
-| 5 | Email Delivery (Mailgun) | Pending |
-| 5A | Switch to SMTP2Go | Pending |
-| 6 | Brevo CRM Sync | Pending |
-| 7 | Admin Dashboard | Pending |
-| 8 | Polish, Testing & Launch | Pending |
+| 0 to 4 | Boilerplate, landing page, assessment form, AI scoring, results page | ✅ Complete |
+| 5 / 5A | Email delivery (Mailgun, then switched to SMTP2Go) | ✅ Complete (PR #8, #10) |
+| 6 | Brevo CRM sync | ✅ Complete (PR #11) |
+| 7 | Admin dashboard | ✅ Complete (PR #12) |
+| 8 | Polish, testing and launch | ✅ Complete (PR #13) |
+| 9a to 9c | reCAPTCHA resilience, CSP fix, Typeform-style animations | ✅ Complete (PR #18 to #20) |
 
 Each PRD lives in `docs/prds/phase-N-*.md`. Implementation prompts are in `docs/RalphWiggumPrompts.md`.
 
@@ -221,6 +205,17 @@ Full spec in `docs/prds/phase-1-landing-page.md` Section 1.1.
 
 ---
 
+## Coding Rules
+
+- Validate all API inputs with Zod at the top of the handler. Errors return `{ error: string }` with the right status code.
+- All env vars go through `src/libs/Env.ts`. Never expose secrets in client code.
+- Never log PII. Hash IPs with SHA-256 (`src/lib/hash.ts`) before storing.
+- Admin routes must verify the Clerk `org:admin` role.
+- CRM and email failures are logged to Sentry and must never block or surface in the assessment flow.
+- User-facing errors are friendly; technical detail goes to Sentry.
+
+---
+
 ## Testing Commands
 
 ```bash
@@ -251,16 +246,7 @@ GitHub Actions (`.github/workflows/CI.yml`) runs on PRs to main:
 
 2. **i18n was removed in Phase 0** — `next-intl` was stripped out. Do NOT route strings through next-intl. Write user-facing strings directly in components. The old boilerplate `src/locales/` directory no longer exists.
 
-3. **Semgrep on Windows — broken as of v1.151.0** — Multiple approaches fail:
-   - `python -m semgrep` — deprecated as of v1.38.0, exits with deprecation error
-   - `semgrep` / `npx semgrep` — not on PATH
-   - `pysemgrep.exe --config=auto` — fails with `UnicodeEncodeError: 'charmap' codec can't encode character '\u202a'` (Windows cp1252 encoding bug when writing downloaded rules to a temp file)
-
-   **Workaround:** Set `PYTHONUTF8=1` before running:
-   ```bash
-   PYTHONUTF8=1 "C:/Users/Razaq/AppData/Roaming/Python/Python313/Scripts/pysemgrep.exe" --config=auto src/ --error
-   ```
-   If that still fails, semgrep CI will catch issues. Note this in the PR rather than skipping silently.
+3. **Semgrep on Windows**: use the command in the global `~/.claude/CLAUDE.md` (`PYTHONUTF8=1` is required). If it still fails, CI catches issues; note this in the PR rather than skipping silently.
 
 4. **`npm run build` takes 60–90 seconds** — When running build in a Claude Code session, use `run_in_background: true` or add a long timeout (120s+). A 30s timeout will falsely appear to hang. The build output shows `✓ Compiled successfully` before lint/type phases, so partial output does not mean success.
 
