@@ -65,6 +65,8 @@ This repo enforces **Conventional Commits** via commitlint + Husky.
 General branch, commit, secrets and PR review rules come from the global `~/.claude/CLAUDE.md`.
 Additions for this repo:
 
+- Merging to `main` deploys straight to production on Railway (`assess.e3digital.net`), so never
+  merge or deploy unless asked.
 - Before pushing, rebase onto the latest `main` so the PR has no conflicts:
   `git fetch origin main && git rebase origin/main`, then `git push --force-with-lease`.
 - Checks to run after every feature, in order:
