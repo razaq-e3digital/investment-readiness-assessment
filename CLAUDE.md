@@ -138,8 +138,7 @@ src/
 └── utils/        # Utility functions (Helpers.ts for cn(), analytics.ts)
 
 docs/
-├── prds/         # Phase PRDs (phase-0 through phase-9c)
-└── RalphWiggumPrompts.md  # Implementation prompts (RalphWiggum + Claude Code Interactive)
+└── prds/         # Phase PRDs (phase-0 through phase-9c)
 ```
 
 Note both `lib/` (integrations) and `libs/` (core) exist. ESLint ignores `docs/**` and `**/*.md`
@@ -160,16 +159,9 @@ The application is built in 9 incremental phases:
 | 8 | Polish, testing and launch | ✅ Complete (PR #13) |
 | 9a to 9c | reCAPTCHA resilience, CSP fix, Typeform-style animations | ✅ Complete (PR #18 to #20) |
 
-Each PRD lives in `docs/prds/phase-N-*.md`. Implementation prompts are in `docs/RalphWiggumPrompts.md`.
+Each PRD lives in `docs/prds/phase-N-*.md`.
 
-### RalphWiggum vs Claude Code Interactive Prompts
-
-Two prompt types exist in `docs/RalphWiggumPrompts.md`:
-
-1. **RalphWiggum prompts** — For the RalphWiggum plugin (automated PRD-to-code). Use `@ralphwiggum implement docs/prds/phase-N-*.md` syntax.
-2. **Claude Code Interactive prompts** — For Claude Code sessions (conversational, with manual pause points). Use these if RalphWiggum is not available.
-
-Both reference the same PRDs. Always implement phases in order (0 → 1 → 2 → ...).
+Always implement phases in order (0 → 1 → 2 → ...).
 
 ---
 
